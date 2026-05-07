@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/daner
+    username: daner
+    password: REPLACE_ME
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: REPLACE_ME
+            client-secret: REPLACE_ME
+            redirect-uri: http://localhost:8080/v1/auth/google/callback
+
+app:
+  jwt:
+    secret: REPLACE_ME_with_a_long_random_string_at_least_32_bytes
+  cors:
+    allowed-origins: http://localhost:3000
+  frontend:
+    url: http://localhost:3000

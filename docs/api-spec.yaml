@@ -1,0 +1,907 @@
+openapi: 3.0.3
+info:
+  title: 다너 (Daner) API
+  description: |
+    단어로 모이는 작은 커뮤니티 서비스 API.
+    
+    - 회원: `Authorization: Bearer {JWT}` 헤더 사용
+    - 비회원: `X-Anonymous-Token` 헤더로 식별 (UUID, 클라이언트가 쿠키·localStorage로 보관)
+  version: 0.1.0
+  contact:
+    name: Daner Team
+
+servers:
+  - url: https://api.daner.com/v1
+    description: Production
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: Auth
+    description: 인증
+  - name: Home
+    description: 홈 화면
+  - name: Word
+    description: 단어 방
+  - name: Comment
+    description: 댓글·답글
+  - name: Like
+    description: 좋아요
+  - name: Profile
+    description: 프로필·알림
+
+# ============================================================
+# 보안 스킴
+# ============================================================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    AnonymousToken:
+      type: apiKey
+      in: header
+      name: X-Anonymous-Token
+
+  # ==========================================================
+  # 공통 스키마
+  # ==========================================================
+  schemas:
+    # ----- 응답 래퍼 -----
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          nullable: true
+        error:
+          nullable: true
+          example: null
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        data:
+          nullable: true
+          example: null
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: WORD_NOT_FOUND
+            message:
+              type: string
+              example: 해당 단어 방이 존재하지 않습니다.
+
+    # ----- 도메인 -----
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 5
+        nickname:
+          type: string
+          example: 감자전
+        profile_image_url:
+          type: string
+          format: uri
+          nullable: true
+          example: https://lh3.googleusercontent.com/...
+
+    Word:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        word:
+          type: string
+          example: 퇴근
+        comment_count:
+          type: integer
+          example: 47
+        like_count:
+          type: integer
+          example: 230
+        created_at:
+          type: string
+          format: date-time
+
+    Author:
+      oneOf:
+        - $ref: '#/components/schemas/UserAuthor'
+        - $ref: '#/components/schemas/AnonymousAuthor'
+      discriminator:
+        propertyName: type
+
+    UserAuthor:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [user]
+        id:
+          type: integer
+          format: int64
+        nickname:
+          type: string
+
+    AnonymousAuthor:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [anonymous]
+        label:
+          type: string
+          example: 익명1
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        content:
+          type: string
+          example: 오늘은 칼퇴 성공
+        author:
+          $ref: '#/components/schemas/Author'
+        like_count:
+          type: integer
+        is_liked:
+          type: boolean
+          description: 비로그인이면 항상 false
+        reply_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    Reply:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        parent_id:
+          type: integer
+          format: int64
+        content:
+          type: string
+        author:
+          $ref: '#/components/schemas/Author'
+        like_count:
+          type: integer
+        is_liked:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum: [reply, like]
+        word:
+          type: string
+        comment_id:
+          type: integer
+          format: int64
+        actor:
+          type: object
+          properties:
+            nickname:
+              type: string
+        preview:
+          type: string
+          nullable: true
+          description: type=reply일 때만 존재
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    AuthTokens:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+
+    SignupRequiredResponse:
+      type: object
+      description: OAuth는 성공했으나 닉네임 미설정 → 닉네임 입력 필요
+      properties:
+        signup_required:
+          type: boolean
+          example: true
+        signup_token:
+          type: string
+          description: 닉네임 등록 시 사용할 임시 토큰 (10분 유효)
+
+  # ==========================================================
+  # 공통 파라미터
+  # ==========================================================
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      description: 페이지네이션 커서
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      description: 페이지 크기
+      schema:
+        type: integer
+        default: 20
+        maximum: 50
+
+  # ==========================================================
+  # 공통 응답
+  # ==========================================================
+  responses:
+    Unauthorized:
+      description: 인증 필요
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: 리소스 없음
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: 잘못된 요청
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+# ============================================================
+# 엔드포인트
+# ============================================================
+paths:
+
+  # ----- Auth (Google OAuth) -----
+  /auth/google:
+    get:
+      tags: [Auth]
+      summary: 구글 OAuth 로그인 시작
+      description: |
+        구글 OAuth 동의 화면으로 리다이렉트.
+        프론트는 이 URL로 사용자를 보내기만 하면 됨.
+      responses:
+        '302':
+          description: 구글 OAuth 페이지로 리다이렉트
+          headers:
+            Location:
+              schema:
+                type: string
+
+  /auth/google/callback:
+    get:
+      tags: [Auth]
+      summary: 구글 OAuth 콜백
+      description: |
+        구글이 인증 후 이 엔드포인트로 redirect 시킴.
+        - 가입된 사용자: 우리 서비스 JWT 발급 → 프론트로 토큰과 함께 리다이렉트
+        - 신규 사용자: 닉네임 입력이 필요하므로 signup_token과 함께 닉네임 입력 페이지로 리다이렉트
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 구글이 발급한 인증 코드
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        '302':
+          description: |
+            프론트엔드의 다음 경로 중 하나로 리다이렉트
+            - 기존 회원: `/auth/success?access_token=...&refresh_token=...`
+            - 신규: `/auth/signup?signup_token=...`
+          headers:
+            Location:
+              schema:
+                type: string
+
+  /auth/signup:
+    post:
+      tags: [Auth]
+      summary: 신규 회원 닉네임 등록 완료
+      description: OAuth 콜백에서 받은 signup_token과 닉네임으로 가입 완료.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [signup_token, nickname]
+              properties:
+                signup_token:
+                  type: string
+                  description: /auth/google/callback에서 받은 임시 토큰
+                nickname:
+                  type: string
+                  minLength: 2
+                  maxLength: 12
+                  pattern: '^[a-zA-Z0-9가-힣]+$'
+      responses:
+        '201':
+          description: 가입 완료, 정식 토큰 발급
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokens'
+        '400':
+          description: 닉네임 중복 또는 형식 오류
+        '401':
+          description: signup_token 만료 또는 무효
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: 액세스 토큰 갱신
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: 갱신 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: 로그아웃
+      description: 서버 측 refresh token 무효화. 클라이언트는 토큰 삭제 필요.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 로그아웃 성공
+
+  /auth/check-nickname:
+    get:
+      tags: [Auth]
+      summary: 닉네임 중복 확인
+      description: 닉네임 입력 폼에서 실시간 검사용.
+      parameters:
+        - name: nickname
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      available:
+                        type: boolean
+                      reason:
+                        type: string
+                        nullable: true
+                        example: "이미 사용 중인 닉네임입니다"
+
+  # ----- Home -----
+  /home:
+    get:
+      tags: [Home]
+      summary: 홈 화면 데이터
+      description: |
+        - 로그인: 내 단어 책장 + 인기 TOP 3
+        - 비로그인: 인기 TOP 3만 (my_words는 빈 배열)
+      security:
+        - BearerAuth: []
+        - {}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      my_words:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            word:
+                              type: string
+                            comment_count:
+                              type: integer
+                            last_activity_at:
+                              type: string
+                              format: date-time
+                            my_last_comment_at:
+                              type: string
+                              format: date-time
+                      popular_words:
+                        type: array
+                        maxItems: 3
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            word:
+                              type: string
+                            comment_count:
+                              type: integer
+
+  # ----- Word -----
+  /words/{word}:
+    get:
+      tags: [Word]
+      summary: 단어 방 조회
+      description: 정규화 후 조회. 방이 없으면 exists=false로 응답.
+      parameters:
+        - name: word
+          in: path
+          required: true
+          schema:
+            type: string
+          example: 퇴근
+      responses:
+        '200':
+          description: 방 존재 여부에 따라 응답 형태가 다름
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    description: 방이 이미 존재
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/Word'
+                          - type: object
+                            properties:
+                              exists:
+                                type: boolean
+                                example: true
+                  - type: object
+                    description: 방이 아직 없음
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          word:
+                            type: string
+                          exists:
+                            type: boolean
+                            example: false
+                          message:
+                            type: string
+                            example: 이 단어로 처음 들어왔어요. 첫 댓글을 남기면 방이 생겨요.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /words/{word}/comments:
+    get:
+      tags: [Word]
+      summary: 단어 방 댓글 목록
+      parameters:
+        - name: word
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [latest, popular]
+            default: latest
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      comments:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Comment'
+                      next_cursor:
+                        type: string
+                        nullable: true
+
+    post:
+      tags: [Comment]
+      summary: 댓글 작성 (방 자동 생성)
+      description: 방이 없으면 첫 댓글과 함께 방이 생성됨.
+      security:
+        - BearerAuth: []
+        - AnonymousToken: []
+      parameters:
+        - name: word
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+                anonymous:
+                  type: boolean
+                  default: false
+                  description: 회원이어도 익명으로 작성할지. 비회원이면 무시됨(강제 익명).
+      responses:
+        '201':
+          description: 작성 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ----- Comment -----
+  /comments/{id}:
+    delete:
+      tags: [Comment]
+      summary: 본인 댓글 삭제
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 삭제 성공
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: 본인 댓글 아님
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /comments/{id}/replies:
+    get:
+      tags: [Comment]
+      summary: 답글 목록
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      replies:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Reply'
+                      next_cursor:
+                        type: string
+                        nullable: true
+
+    post:
+      tags: [Comment]
+      summary: 답글 작성
+      description: 답글의 답글은 불가 (depth 1 제한)
+      security:
+        - BearerAuth: []
+        - AnonymousToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+                anonymous:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: 작성 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Reply'
+
+  # ----- Like -----
+  /comments/{id}/like:
+    post:
+      tags: [Like]
+      summary: 댓글 좋아요 (회원 전용)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '201':
+          description: 좋아요 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      like_count:
+                        type: integer
+                      is_liked:
+                        type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: 이미 좋아요한 댓글
+
+    delete:
+      tags: [Like]
+      summary: 좋아요 취소
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 취소 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      like_count:
+                        type: integer
+                      is_liked:
+                        type: boolean
+
+  # ----- Profile -----
+  /users/me:
+    get:
+      tags: [Profile]
+      summary: 내 프로필 (책장)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      my_words:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            word:
+                              type: string
+                            my_comment_count:
+                              type: integer
+                            last_activity_at:
+                              type: string
+                              format: date-time
+                      next_cursor:
+                        type: string
+                        nullable: true
+
+  /users/{nickname}:
+    get:
+      tags: [Profile]
+      summary: 타인 프로필 (TOP 3만 노출)
+      parameters:
+        - name: nickname
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          nickname:
+                            type: string
+                      top_words:
+                        type: array
+                        maxItems: 3
+                        items:
+                          type: object
+                          properties:
+                            word:
+                              type: string
+                            my_comment_count:
+                              type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/me/notifications:
+    get:
+      tags: [Profile]
+      summary: 내 알림 목록
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      notifications:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Notification'
+                      next_cursor:
+                        type: string
+                        nullable: true
+
+  /users/me/notifications/read:
+    patch:
+      tags: [Profile]
+      summary: 알림 읽음 처리
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notification_ids]
+              properties:
+                notification_ids:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+      responses:
+        '200':
+          description: 처리 완료
