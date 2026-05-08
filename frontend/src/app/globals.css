@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 무채색 + 살짝 따뜻한 베이스 */
+  --background: #fdfcfa;
+  --foreground: #1a1a1a;
+  --foreground-secondary: #5a5a5a;
+  --foreground-tertiary: #9a9a9a;
+  --hairline: #e6e3de;
+  --hairline-strong: #c4c0b8;
+  --accent: #c44545;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-secondary: var(--foreground-secondary);
+  --color-tertiary: var(--foreground-tertiary);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #1a1816;
     --foreground: #ededed;
+    --foreground-secondary: #a0a0a0;
+    --foreground-tertiary: #6a6a6a;
+    --hairline: #2c2a26;
+    --hairline-strong: #4a4640;
+    --accent: #d96565;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Pretendard", "Malgun Gothic", sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 입력창은 밑줄 only */
+.input-underline {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--hairline-strong);
+  outline: none;
+  padding: 0.25rem 0.25rem;
+  width: 100%;
+}
+.input-underline:focus {
+  border-bottom-color: var(--foreground);
 }
