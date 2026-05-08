@@ -50,7 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/google", "/auth/google/**",
                                 "/auth/signup", "/auth/check-nickname", "/auth/refresh",
-                                "/login/oauth2/**",
+                                "/oauth2/**",
                                 "/actuator/health"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
@@ -62,7 +62,6 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth
-                        .authorizationEndpoint(endpoint -> endpoint.baseUri("/auth"))
                         .redirectionEndpoint(endpoint -> endpoint.baseUri("/auth/{registrationId}/callback"))
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler))

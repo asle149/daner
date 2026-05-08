@@ -9,6 +9,8 @@ import com.daner.auth.service.AuthService;
 import com.daner.common.exception.BusinessException;
 import com.daner.common.exception.ErrorCode;
 import com.daner.common.response.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,12 +23,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
+
+    @GetMapping("/google")
+    public void startGoogleOAuth(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.sendRedirect(request.getContextPath() + "/oauth2/authorization/google");
+    }
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
