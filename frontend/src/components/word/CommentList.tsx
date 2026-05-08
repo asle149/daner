@@ -5,6 +5,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchComments } from '@/lib/api/endpoints';
 import type { Comment } from '@/types/api';
 import { CommentItem } from './CommentItem';
+import { SkeletonComment } from '@/components/ui/Skeleton';
 
 type Sort = 'latest' | 'popular';
 
@@ -40,7 +41,11 @@ export function CommentList({ word }: { word: string }) {
       </div>
       <div className="mt-3 divide-y divide-hairline divide-dashed">
         {query.isLoading ? (
-          <p className="py-6 text-center text-sm text-tertiary">불러오는 중…</p>
+          <>
+            <SkeletonComment />
+            <SkeletonComment />
+            <SkeletonComment />
+          </>
         ) : comments.length === 0 ? (
           <p className="py-6 text-center text-sm text-tertiary">아직 아무도 도착하지 않았어요</p>
         ) : (

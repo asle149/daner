@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Header } from '@/components/ui/Header';
 import { Bookshelf } from '@/components/me/Bookshelf';
+import { SkeletonBookshelf } from '@/components/ui/Skeleton';
 import { fetchMyProfile } from '@/lib/api/endpoints';
 import { useAuth } from '@/lib/auth/AuthContext';
 
@@ -45,7 +46,7 @@ export default function MyProfilePage() {
           ) : null}
         </header>
 
-        <Bookshelf words={allWords} />
+        {profile.isLoading ? <SkeletonBookshelf /> : <Bookshelf words={allWords} />}
 
         {profile.hasNextPage ? (
           <button
