@@ -61,4 +61,23 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
         java.time.LocalDateTime getMyLastCommentAt();
     }
+
+    @Query("SELECT w.id AS id, w.word AS word, COUNT(c) AS myCommentCount, " +
+            "MAX(c.createdAt) AS lastActivityAt " +
+            "FROM Comment c JOIN c.word w " +
+            "WHERE c.user.id = :userId " +
+            "GROUP BY w.id, w.word " +
+            "ORDER BY MAX(c.createdAt) DESC")
+    List<MyBookshelfProjection> findMyBookshelf(@Param("userId") Long userId,
+                                                org.springframework.data.domain.Pageable pageable);
+
+    interface MyBookshelfProjection {
+        Long getId();
+
+        String getWord();
+
+        Long getMyCommentCount();
+
+        java.time.LocalDateTime getLastActivityAt();
+    }
 }
