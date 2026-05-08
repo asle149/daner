@@ -4,6 +4,7 @@ import { use } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/ui/Header';
 import { CommentList } from '@/components/word/CommentList';
+import { Composer } from '@/components/word/Composer';
 import { fetchWordRoom } from '@/lib/api/endpoints';
 
 export default function WordRoomPage({ params }: { params: Promise<{ word: string }> }) {
@@ -22,9 +23,7 @@ export default function WordRoomPage({ params }: { params: Promise<{ word: strin
         <header className="mt-12 text-center">
           <h1 className="text-3xl font-medium tracking-wide">{word}</h1>
           {room.data?.exists ? (
-            <p className="mt-2 text-sm text-secondary">
-              {room.data.commentCount}개의 마음
-            </p>
+            <p className="mt-2 text-sm text-secondary">{room.data.commentCount}개의 마음</p>
           ) : room.data?.exists === false ? (
             <p className="mt-2 text-sm text-secondary">{room.data.message}</p>
           ) : null}
@@ -32,6 +31,12 @@ export default function WordRoomPage({ params }: { params: Promise<{ word: strin
 
         <CommentList word={word} />
       </main>
+
+      <div className="fixed inset-x-0 bottom-0 border-t border-hairline bg-background/95 px-6 py-3 backdrop-blur">
+        <div className="mx-auto max-w-2xl">
+          <Composer kind="comment" word={word} />
+        </div>
+      </div>
     </>
   );
 }

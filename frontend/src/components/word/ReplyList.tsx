@@ -5,8 +5,10 @@ import { fetchReplies } from '@/lib/api/endpoints';
 import type { Reply } from '@/types/api';
 import { timeAgo } from '@/lib/util/timeAgo';
 import { AuthorLine } from './AuthorLine';
+import { LikeButton } from './LikeButton';
+import { DeleteButton } from './DeleteButton';
 
-export function ReplyList({ commentId }: { commentId: number }) {
+export function ReplyList({ commentId, word }: { commentId: number; word: string }) {
   const query = useInfiniteQuery({
     queryKey: ['replies', commentId],
     queryFn: ({ pageParam }) => fetchReplies(commentId, pageParam ?? null),
@@ -23,7 +25,10 @@ export function ReplyList({ commentId }: { commentId: number }) {
           <p className="text-[13px] text-secondary">{r.content}</p>
           <div className="flex items-center justify-between">
             <AuthorLine author={r.author} time={timeAgo(r.createdAt)} />
-            <span className="text-[11px] text-tertiary">♡ {r.likeCount}</span>
+            <div className="flex items-center gap-3">
+              <LikeButton commentId={r.id} initialCount={r.likeCount} initialLiked={r.isLiked} />
+              <DeleteButton commentId={r.id} author={r.author} word={word} />
+            </div>
           </div>
         </article>
       ))}

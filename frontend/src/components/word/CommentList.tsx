@@ -44,7 +44,7 @@ export function CommentList({ word }: { word: string }) {
         ) : comments.length === 0 ? (
           <p className="py-6 text-center text-sm text-tertiary">아직 아무도 도착하지 않았어요</p>
         ) : (
-          comments.map((c) => <CommentItem key={c.id} comment={c} />)
+          comments.map((c) => <CommentItem key={c.id} comment={c} word={word} />)
         )}
       </div>
       {query.hasNextPage ? (
