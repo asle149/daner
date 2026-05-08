@@ -10,7 +10,12 @@ import java.util.List;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    Slice<Notification> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    @org.springframework.data.jpa.repository.Query(
+            "SELECT n FROM Notification n WHERE n.user.id = :userId " +
+                    "ORDER BY n.createdAt DESC, n.id DESC")
+    Slice<Notification> findByUserIdOrderByCreatedAtDesc(
+            @org.springframework.data.repository.query.Param("userId") Long userId,
+            Pageable pageable);
 
     long countByUserIdAndIsReadFalse(Long userId);
 

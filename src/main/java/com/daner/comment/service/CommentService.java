@@ -12,11 +12,13 @@ import com.daner.common.exception.BusinessException;
 import com.daner.common.exception.ErrorCode;
 import com.daner.common.util.WordNormalizer;
 import com.daner.like.repository.CommentLikeRepository;
+import com.daner.notification.event.ReplyCreatedEvent;
 import com.daner.user.entity.User;
 import com.daner.user.repository.UserRepository;
 import com.daner.word.entity.Word;
 import com.daner.word.repository.WordRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -44,6 +46,7 @@ public class CommentService {
     private final WordRepository wordRepository;
     private final UserRepository userRepository;
     private final AnonymousLabelService anonymousLabelService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public CommentSliceResponse listForWord(String rawWord, String sort, String cursor, Integer limit, Long currentUserId) {
@@ -98,6 +101,7 @@ public class CommentService {
                 .content(request.content())
                 .build());
         word.increaseCommentCount();
+        eventPublisher.publishEvent(new ReplyCreatedEvent(parent.getId(), reply.getId()));
         return ReplyResponse.of(reply, false);
     }
 
