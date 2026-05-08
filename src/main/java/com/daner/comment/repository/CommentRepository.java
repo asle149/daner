@@ -24,9 +24,41 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             "WHERE c.parent.id IN :parentIds GROUP BY c.parent.id")
     List<ParentReplyCount> countRepliesByParentIds(@Param("parentIds") Collection<Long> parentIds);
 
+    @Query("SELECT c.word.id AS wordId, COUNT(c) AS cnt FROM Comment c " +
+            "WHERE c.createdAt >= :since GROUP BY c.word.id ORDER BY COUNT(c) DESC, c.word.id ASC")
+    List<WordCommentCount> findTopWordsByCommentCountSince(@Param("since") java.time.LocalDateTime since,
+                                                            org.springframework.data.domain.Pageable pageable);
+
     interface ParentReplyCount {
         Long getParentId();
 
         Long getCnt();
+    }
+
+    interface WordCommentCount {
+        Long getWordId();
+
+        Long getCnt();
+    }
+
+    @Query("SELECT w.id AS id, w.word AS word, w.commentCount AS commentCount, " +
+            "(SELECT MAX(c2.createdAt) FROM Comment c2 WHERE c2.word.id = w.id) AS lastActivityAt, " +
+            "MAX(c.createdAt) AS myLastCommentAt " +
+            "FROM Comment c JOIN c.word w " +
+            "WHERE c.user.id = :userId " +
+            "GROUP BY w.id, w.word, w.commentCount " +
+            "ORDER BY MAX(c.createdAt) DESC")
+    List<MyWordProjection> findMyWords(@Param("userId") Long userId);
+
+    interface MyWordProjection {
+        Long getId();
+
+        String getWord();
+
+        int getCommentCount();
+
+        java.time.LocalDateTime getLastActivityAt();
+
+        java.time.LocalDateTime getMyLastCommentAt();
     }
 }
