@@ -1,17 +1,18 @@
-package com.daner.word.controller;
+package com.daner.comment.controller;
 
 import com.daner.auth.service.AnonymousTokenResolver;
 import com.daner.comment.dto.CommentCreateRequest;
-import com.daner.comment.dto.CommentResponse;
-import com.daner.comment.dto.CommentSliceResponse;
+import com.daner.comment.dto.ReplyResponse;
+import com.daner.comment.dto.ReplySliceResponse;
 import com.daner.comment.service.CommentService;
+import com.daner.common.exception.BusinessException;
+import com.daner.common.exception.ErrorCode;
 import com.daner.common.response.ApiResponse;
-import com.daner.word.dto.WordRoomResponse;
-import com.daner.word.service.WordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,37 +26,41 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/words")
+@RequestMapping("/comments")
 @RequiredArgsConstructor
-public class WordController {
+public class CommentController {
 
-    private final WordService wordService;
     private final CommentService commentService;
     private final AnonymousTokenResolver anonymousTokenResolver;
 
-    @GetMapping("/{word}")
-    public ApiResponse<WordRoomResponse> getRoom(@PathVariable String word) {
-        return ApiResponse.ok(wordService.getRoom(word));
-    }
-
-    @GetMapping("/{word}/comments")
-    public ApiResponse<CommentSliceResponse> listComments(
-            @PathVariable String word,
-            @RequestParam(defaultValue = "latest") String sort,
+    @GetMapping("/{id}/replies")
+    public ApiResponse<ReplySliceResponse> listReplies(
+            @PathVariable Long id,
             @RequestParam(required = false) String cursor,
             @RequestParam(required = false) Integer limit,
             @AuthenticationPrincipal Long currentUserId) {
-        return ApiResponse.ok(commentService.listForWord(word, sort, cursor, limit, currentUserId));
+        return ApiResponse.ok(commentService.listReplies(id, cursor, limit, currentUserId));
     }
 
-    @PostMapping("/{word}/comments")
+    @PostMapping("/{id}/replies")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<CommentResponse> createComment(
-            @PathVariable String word,
+    public ApiResponse<ReplyResponse> createReply(
+            @PathVariable Long id,
             @Valid @RequestBody CommentCreateRequest request,
             @AuthenticationPrincipal Long currentUserId,
             @RequestHeader(value = AnonymousTokenResolver.HEADER, required = false) String anonymousHeader) {
         UUID anonymousToken = anonymousTokenResolver.resolve(anonymousHeader).orElse(null);
-        return ApiResponse.ok(commentService.createTopLevel(word, request, currentUserId, anonymousToken));
+        return ApiResponse.ok(commentService.createReply(id, request, currentUserId, anonymousToken));
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Long currentUserId) {
+        if (currentUserId == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+        commentService.delete(id, currentUserId);
+        return ApiResponse.ok();
     }
 }

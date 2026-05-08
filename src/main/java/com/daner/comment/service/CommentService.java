@@ -1,13 +1,19 @@
 package com.daner.comment.service;
 
+import com.daner.auth.service.AnonymousLabelService;
+import com.daner.comment.dto.CommentCreateRequest;
 import com.daner.comment.dto.CommentResponse;
 import com.daner.comment.dto.CommentSliceResponse;
 import com.daner.comment.dto.ReplyResponse;
 import com.daner.comment.dto.ReplySliceResponse;
 import com.daner.comment.entity.Comment;
 import com.daner.comment.repository.CommentRepository;
+import com.daner.common.exception.BusinessException;
+import com.daner.common.exception.ErrorCode;
 import com.daner.common.util.WordNormalizer;
 import com.daner.like.repository.CommentLikeRepository;
+import com.daner.user.entity.User;
+import com.daner.user.repository.UserRepository;
 import com.daner.word.entity.Word;
 import com.daner.word.repository.WordRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +42,8 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
     private final WordRepository wordRepository;
+    private final UserRepository userRepository;
+    private final AnonymousLabelService anonymousLabelService;
 
     @Transactional(readOnly = true)
     public CommentSliceResponse listForWord(String rawWord, String sort, String cursor, Integer limit, Long currentUserId) {
@@ -51,6 +60,83 @@ public class CommentService {
                 : commentRepository.findByWordIdAndParentIsNullOrderByCreatedAtDesc(word.get().getId(), pageable);
         List<CommentResponse> items = mapComments(slice.getContent(), currentUserId);
         return new CommentSliceResponse(items, slice.hasNext() ? String.valueOf(page + 1) : null);
+    }
+
+    @Transactional
+    public CommentResponse createTopLevel(String rawWord, CommentCreateRequest request,
+                                          Long currentUserId, UUID anonymousToken) {
+        String normalized = WordNormalizer.normalize(rawWord);
+        Word word = wordRepository.findByWord(normalized)
+                .orElseGet(() -> wordRepository.save(Word.builder().word(normalized).build()));
+
+        Author author = resolveAuthor(word, currentUserId, anonymousToken, Boolean.TRUE.equals(request.anonymous()));
+        Comment comment = commentRepository.save(Comment.builder()
+                .word(word)
+                .user(author.user)
+                .anonymousLabel(author.label)
+                .content(request.content())
+                .build());
+        word.increaseCommentCount();
+        return CommentResponse.of(comment, false, 0);
+    }
+
+    @Transactional
+    public ReplyResponse createReply(Long parentId, CommentCreateRequest request,
+                                     Long currentUserId, UUID anonymousToken) {
+        Comment parent = commentRepository.findById(parentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+        if (parent.isReply()) {
+            throw new BusinessException(ErrorCode.REPLY_DEPTH_EXCEEDED);
+        }
+        Word word = parent.getWord();
+        Author author = resolveAuthor(word, currentUserId, anonymousToken, Boolean.TRUE.equals(request.anonymous()));
+        Comment reply = commentRepository.save(Comment.builder()
+                .word(word)
+                .user(author.user)
+                .parent(parent)
+                .anonymousLabel(author.label)
+                .content(request.content())
+                .build());
+        word.increaseCommentCount();
+        return ReplyResponse.of(reply, false);
+    }
+
+    @Transactional
+    public void delete(Long commentId, Long currentUserId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+        if (comment.getUser() == null || !comment.getUser().getId().equals(currentUserId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        if (!comment.isReply() && commentRepository.countByWordIdAndParentIsNull(comment.getWord().getId()) >= 0) {
+            long replyCount = commentRepository.countRepliesByParentIds(Set.of(comment.getId())).stream()
+                    .mapToLong(CommentRepository.ParentReplyCount::getCnt).sum();
+            if (replyCount > 0) {
+                throw new BusinessException(ErrorCode.COMMENT_HAS_REPLIES);
+            }
+        }
+        commentRepository.delete(comment);
+    }
+
+    private Author resolveAuthor(Word word, Long currentUserId, UUID anonymousToken, boolean wantsAnonymous) {
+        if (currentUserId != null) {
+            User user = userRepository.findById(currentUserId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+            if (wantsAnonymous) {
+                return new Author(user, anonymousLabelService.resolveOrAssign(
+                        anonymousToken != null ? anonymousToken : UUID.nameUUIDFromBytes(("u" + currentUserId).getBytes()),
+                        word));
+            }
+            return new Author(user, null);
+        }
+        if (anonymousToken == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "로그인하거나 X-Anonymous-Token 헤더가 필요합니다.");
+        }
+        String label = anonymousLabelService.resolveOrAssign(anonymousToken, word);
+        return new Author(null, label);
+    }
+
+    private record Author(User user, String label) {
     }
 
     @Transactional(readOnly = true)
