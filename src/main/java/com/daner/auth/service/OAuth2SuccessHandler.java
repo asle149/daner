@@ -1,6 +1,10 @@
 package com.daner.auth.service;
 
 import com.daner.auth.dto.DanerOAuth2User;
+import com.daner.common.exception.BusinessException;
+import com.daner.common.exception.ErrorCode;
+import com.daner.user.entity.User;
+import com.daner.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +21,8 @@ import java.io.IOException;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
+    private final UserRepository userRepository;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
@@ -44,8 +50,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     }
 
     private String buildSuccessRedirect(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         String accessToken = jwtTokenProvider.createAccessToken(userId);
         String refreshToken = jwtTokenProvider.createRefreshToken(userId);
+        refreshTokenService.store(user, refreshToken);
         return UriComponentsBuilder.fromUriString(frontendUrl)
                 .path("/auth/success")
                 .queryParam("access_token", accessToken)
