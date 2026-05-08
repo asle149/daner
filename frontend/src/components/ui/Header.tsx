@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { NotificationBell } from './NotificationBell';
 
 const OAUTH_START =
   process.env.NEXT_PUBLIC_OAUTH_START_URL ?? 'http://localhost:8080/v1/auth/google';
@@ -32,9 +33,10 @@ export function Header({ back = false }: HeaderProps) {
       <Link href="/" className="text-secondary tracking-wider">
         daner
       </Link>
-      <div className="flex w-16 justify-end">
+      <div className="flex w-24 justify-end">
         {loading ? null : isAuthenticated ? (
           <div className="flex items-center gap-3 text-secondary">
+            <NotificationBell />
             <Link href="/me" aria-label="프로필">
               내 책장
             </Link>
