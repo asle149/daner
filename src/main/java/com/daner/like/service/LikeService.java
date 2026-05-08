@@ -4,6 +4,7 @@ import com.daner.comment.entity.Comment;
 import com.daner.comment.repository.CommentRepository;
 import com.daner.common.exception.BusinessException;
 import com.daner.common.exception.ErrorCode;
+import com.daner.common.ratelimit.RateLimiter;
 import com.daner.like.dto.LikeStateResponse;
 import com.daner.like.entity.CommentLike;
 import com.daner.like.repository.CommentLikeRepository;
@@ -23,9 +24,11 @@ public class LikeService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final RateLimiter rateLimiter;
 
     @Transactional
     public LikeStateResponse like(Long commentId, Long userId) {
+        rateLimiter.checkMemberLike(userId);
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         if (commentLikeRepository.existsByUserIdAndCommentId(userId, commentId)) {

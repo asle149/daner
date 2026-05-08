@@ -10,6 +10,7 @@ import com.daner.comment.entity.Comment;
 import com.daner.comment.repository.CommentRepository;
 import com.daner.common.exception.BusinessException;
 import com.daner.common.exception.ErrorCode;
+import com.daner.common.ratelimit.RateLimiter;
 import com.daner.common.util.WordNormalizer;
 import com.daner.like.repository.CommentLikeRepository;
 import com.daner.notification.event.ReplyCreatedEvent;
@@ -47,6 +48,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final AnonymousLabelService anonymousLabelService;
     private final ApplicationEventPublisher eventPublisher;
+    private final RateLimiter rateLimiter;
 
     @Transactional(readOnly = true)
     public CommentSliceResponse listForWord(String rawWord, String sort, String cursor, Integer limit, Long currentUserId) {
@@ -68,6 +70,7 @@ public class CommentService {
     @Transactional
     public CommentResponse createTopLevel(String rawWord, CommentCreateRequest request,
                                           Long currentUserId, UUID anonymousToken) {
+        applyRateLimit(currentUserId, anonymousToken);
         String normalized = WordNormalizer.normalize(rawWord);
         Word word = wordRepository.findByWord(normalized)
                 .orElseGet(() -> wordRepository.save(Word.builder().word(normalized).build()));
@@ -86,6 +89,7 @@ public class CommentService {
     @Transactional
     public ReplyResponse createReply(Long parentId, CommentCreateRequest request,
                                      Long currentUserId, UUID anonymousToken) {
+        applyRateLimit(currentUserId, anonymousToken);
         Comment parent = commentRepository.findById(parentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         if (parent.isReply()) {
@@ -141,6 +145,14 @@ public class CommentService {
     }
 
     private record Author(User user, String label) {
+    }
+
+    private void applyRateLimit(Long currentUserId, UUID anonymousToken) {
+        if (currentUserId != null) {
+            rateLimiter.checkMemberComment(currentUserId);
+        } else if (anonymousToken != null) {
+            rateLimiter.checkGuestComment(anonymousToken.toString());
+        }
     }
 
     @Transactional(readOnly = true)

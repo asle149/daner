@@ -51,7 +51,8 @@ public class SecurityConfig {
                                 "/auth/google", "/auth/google/**",
                                 "/auth/signup", "/auth/check-nickname", "/auth/refresh",
                                 "/oauth2/**",
-                                "/actuator/health"
+                                "/actuator/health",
+                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/home", "/words/*", "/words/*/comments",
