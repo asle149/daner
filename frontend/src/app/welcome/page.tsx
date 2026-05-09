@@ -27,28 +27,30 @@ export default function WelcomePage() {
 
         <div className="space-y-6 text-[15px] leading-relaxed">
           <p>
-            <strong className="font-bold">단어를 검색해보세요.</strong>{' '}
-            <span className="text-secondary">
-              홈에서 떠오르는 단어를 입력합니다. 띄어쓰기 없이, 한글 10자 또는 영문 20자 이내.
-            </span>
+            <strong className="font-bold underline underline-offset-4">단어를 검색해보세요.</strong>{' '}
+            <span className="text-secondary">홈에서 떠오르는 단어를 입력합니다.</span>
           </p>
           <p>
-            <strong className="font-bold">누군가 먼저 도착했다면 그 방에 들어갑니다.</strong>{' '}
+            <strong className="font-bold underline underline-offset-4">
+              누군가 먼저 도착했다면 그 방에 들어갑니다.
+            </strong>{' '}
             <span className="text-secondary">
               다른 사람들의 한마디가 보여요. 좋아요를 누르거나, 답글을 달거나, 자신의 한마디를
               남길 수 있어요.
             </span>
           </p>
           <p>
-            <strong className="font-bold">
+            <strong className="font-bold underline underline-offset-4">
               처음 도착한 단어라면 첫 한마디를 남겨보세요.
             </strong>{' '}
             <span className="text-secondary">그 순간 그 단어의 방이 만들어집니다.</span>
           </p>
           <p>
-            <strong className="font-bold">친구끼리만의 단어도 만들 수 있어요.</strong>{' '}
+            <strong className="font-bold underline underline-offset-4">
+              친구끼리만의 단어도 만들 수 있어요.
+            </strong>{' '}
             <span className="text-secondary">
-              약속한 단어 하나만 공유하면, 사실상 그 친구들만의 공간이 됩니다.
+              약속한 단어 하나만 공유하면, 그 친구들만의 공간이 됩니다.
             </span>
           </p>
         </div>
