@@ -40,7 +40,7 @@ export function HelpDialog({ open, onClose }: Props) {
           찾지 않은 단어라면 당신의 한 마디로 새로운 방이 열려요.
         </p>
         <div className="border-t border-dashed border-hairline pt-4 font-display text-tertiary">
-          <p className="mb-1 text-[11px] tracking-widest">의견·문의</p>
+          <p className="mb-1 text-[12px] tracking-widest">의견·문의</p>
           <a
             href={`mailto:${FEEDBACK_EMAIL}`}
             className="text-foreground hover:text-accent"

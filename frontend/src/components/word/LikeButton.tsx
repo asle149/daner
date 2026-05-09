@@ -43,7 +43,7 @@ export function LikeButton({ commentId, initialCount, initialLiked, word }: Prop
   });
 
   if (!isAuthenticated) {
-    return <span className="font-display text-[12px] text-tertiary">♡ {count}</span>;
+    return <span className="font-display text-[13px] text-tertiary">♡ {count}</span>;
   }
 
   const onClick = () => {
@@ -55,7 +55,7 @@ export function LikeButton({ commentId, initialCount, initialLiked, word }: Prop
     <button
       type="button"
       onClick={onClick}
-      className="font-display text-[12px] disabled:opacity-50"
+      className="font-display text-[13px] disabled:opacity-50"
       disabled={toggle.isPending}
       aria-pressed={liked}
     >

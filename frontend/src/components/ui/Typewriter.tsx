@@ -54,17 +54,32 @@ type Props = {
   speed?: number;
   /** 음절 사이 추가 멈춤 ms */
   syllablePause?: number;
+  /** 같은 키로 sessionStorage에 1회 재생 흔적을 남겨, 같은 세션 동안 재방문 시 즉시 완성 표시 */
+  onceKey?: string;
   className?: string;
 };
 
-export function Typewriter({ text, speed = 110, syllablePause = 40, className }: Props) {
-  const [index, setIndex] = useState(0);
+export function Typewriter({
+  text,
+  speed = 110,
+  syllablePause = 40,
+  onceKey,
+  className,
+}: Props) {
   const sequence = buildSequence(text);
+  const [index, setIndex] = useState(() => {
+    if (typeof window !== 'undefined' && onceKey) {
+      if (sessionStorage.getItem(`daner.typewriter.${onceKey}`)) {
+        return sequence.length; // 이미 재생됨 — 즉시 완성형으로
+      }
+    }
+    return 0;
+  });
+  const done = index >= sequence.length;
 
   useEffect(() => {
-    if (index >= sequence.length) return;
+    if (done) return;
     const isEndOfSyllable = (() => {
-      // 다음 단계가 새 음절의 시작인지 (= 현재 단계가 음절의 마지막)
       if (index + 1 >= sequence.length) return true;
       const cur = sequence[index];
       const next = sequence[index + 1];
@@ -73,16 +88,24 @@ export function Typewriter({ text, speed = 110, syllablePause = 40, className }:
     const delay = isEndOfSyllable ? speed + syllablePause : speed;
     const handle = setTimeout(() => setIndex((i) => i + 1), delay);
     return () => clearTimeout(handle);
-  }, [index, sequence, speed, syllablePause]);
+  }, [index, sequence, speed, syllablePause, done]);
 
-  const shown = index === 0 ? '' : sequence[index - 1];
+  useEffect(() => {
+    if (done && onceKey && typeof window !== 'undefined') {
+      sessionStorage.setItem(`daner.typewriter.${onceKey}`, '1');
+    }
+  }, [done, onceKey]);
+
+  const shown = done ? text : index === 0 ? '' : sequence[index - 1];
 
   return (
     <span className={className}>
       {shown}
-      <span className="caret" aria-hidden>
-        |
-      </span>
+      {done ? null : (
+        <span className="caret" aria-hidden>
+          |
+        </span>
+      )}
     </span>
   );
 }

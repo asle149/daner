@@ -70,7 +70,7 @@ export function Composer(props: Props) {
           {mutation.isPending ? '...' : '쓰기'}
         </button>
       </div>
-      <div className="mt-2 flex items-center justify-between font-display text-[12px] text-tertiary">
+      <div className="mt-2 flex items-center justify-between font-display text-[13px] text-tertiary">
         {isAuthenticated ? (
           <label className="flex items-center gap-1">
             <input

@@ -76,7 +76,7 @@ export default function MyProfilePage() {
           <button
             type="button"
             onClick={onLogout}
-            className="font-display text-[11px] tracking-widest text-tertiary hover:text-secondary"
+            className="font-display text-[12px] tracking-widest text-tertiary hover:text-secondary"
           >
             로그아웃
           </button>

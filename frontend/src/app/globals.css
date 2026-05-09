@@ -73,16 +73,16 @@ body {
   border-bottom-color: var(--foreground);
 }
 
-/* 손그림 밑줄 (PNG) — 입력창 아래에 그림 한 장 */
+/* 손그림 밑줄 (PNG) — 입력창 아래에 그림 한 장. 가로로 길게 잡아 가운데 정렬. */
 .underline-image {
   display: block;
   width: 100%;
-  max-width: 320px;
-  margin: 0.25rem auto 0;
+  max-width: 480px;
+  margin: 0.5rem auto 0;
   height: auto;
   pointer-events: none;
   user-select: none;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 /* 타자기 깜빡 커서 */

@@ -41,7 +41,7 @@ export function ReplyList({ commentId, word }: { commentId: number; word: string
         <button
           type="button"
           onClick={() => void query.fetchNextPage()}
-          className="py-2 text-[11px] text-tertiary"
+          className="py-2 text-[12px] text-tertiary"
           disabled={query.isFetchingNextPage}
         >
           {query.isFetchingNextPage ? '불러오는 중…' : '더 보기'}

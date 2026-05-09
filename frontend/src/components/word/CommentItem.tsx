@@ -27,7 +27,7 @@ export function CommentItem({ comment, word }: { comment: Comment; word: string 
           <button
             type="button"
             onClick={() => (composeReply ? setComposeReply(false) : openReplies())}
-            className="font-display text-[12px] text-tertiary"
+            className="font-display text-[13px] text-tertiary"
           >
             답글
           </button>
@@ -35,7 +35,7 @@ export function CommentItem({ comment, word }: { comment: Comment; word: string 
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="font-display text-[12px] text-tertiary"
+              className="font-display text-[13px] text-tertiary"
             >
               {open ? '접기' : `+${comment.replyCount}`}
             </button>

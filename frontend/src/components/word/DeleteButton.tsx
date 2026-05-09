@@ -31,7 +31,7 @@ export function DeleteButton({ commentId, isMine, word }: Props) {
   return (
     <button
       type="button"
-      className="font-display text-[12px] text-tertiary hover:text-accent"
+      className="font-display text-[13px] text-tertiary hover:text-accent"
       disabled={mutation.isPending}
       onClick={() => {
         if (window.confirm('지울까요?')) mutation.mutate();

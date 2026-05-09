@@ -3,7 +3,7 @@ import type { Author } from '@/types/api';
 export function AuthorLine({ author, time }: { author: Author; time: string }) {
   const name = author.type === 'user' ? author.nickname : author.label;
   return (
-    <p className="font-display text-[12px] text-tertiary">
+    <p className="font-display text-[13px] text-tertiary">
       {name} · {time}
     </p>
   );

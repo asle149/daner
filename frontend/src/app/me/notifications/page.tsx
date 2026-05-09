@@ -76,7 +76,7 @@ export default function NotificationsPage() {
               <section key={word}>
                 <Link
                   href={`/words/${encodeURIComponent(word)}`}
-                  className="font-display text-[11px] tracking-widest text-tertiary"
+                  className="font-display text-[12px] tracking-widest text-tertiary"
                 >
                   {word}
                 </Link>
@@ -118,7 +118,7 @@ function NotificationRow({ n }: { n: Notification }) {
       ) : (
         <p>{actor}님이 ♡를 눌렀어요</p>
       )}
-      <p className="text-[11px] text-tertiary">{timeAgo(n.createdAt)}</p>
+      <p className="text-[12px] text-tertiary">{timeAgo(n.createdAt)}</p>
     </div>
   );
 }
