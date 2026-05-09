@@ -31,11 +31,11 @@ function Book({
     <Link
       href={href}
       style={{ width: `${width}px`, height: `${BOOK_HEIGHT}px` }}
-      className="flex items-end justify-center rounded-t-md border border-hairline-strong bg-hairline/40 text-foreground transition-colors hover:bg-hairline/70"
+      className="flex items-start justify-center rounded-t-md border border-hairline-strong bg-hairline/40 text-foreground transition-colors hover:bg-hairline/70"
       title={`${word} · ${myCommentCount}개의 글`}
     >
       <span
-        className="px-1 pb-2 font-display text-[13px] tracking-tight"
+        className="px-1 pt-2 font-display text-[13px] tracking-tight"
         style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
       >
         {word}
