@@ -23,7 +23,7 @@ export function CommentList({ word }: { word: string }) {
 
   return (
     <section className="mt-6">
-      <div className="flex justify-end gap-3 text-xs">
+      <div className="flex justify-end gap-3 font-display text-xs">
         <button
           type="button"
           className={sort === 'latest' ? 'text-foreground' : 'text-tertiary'}
@@ -47,7 +47,9 @@ export function CommentList({ word }: { word: string }) {
             <SkeletonComment />
           </>
         ) : comments.length === 0 ? (
-          <p className="py-6 text-center text-sm text-tertiary">아직 아무도 도착하지 않았어요</p>
+          <p className="py-6 text-center font-display text-sm text-tertiary">
+            아직 아무도 도착하지 않았어요
+          </p>
         ) : (
           comments.map((c) => <CommentItem key={c.id} comment={c} word={word} />)
         )}
@@ -56,7 +58,7 @@ export function CommentList({ word }: { word: string }) {
         <button
           type="button"
           onClick={() => void query.fetchNextPage()}
-          className="mt-4 w-full py-2 text-xs text-tertiary"
+          className="mt-4 w-full py-2 font-display text-xs text-tertiary"
           disabled={query.isFetchingNextPage}
         >
           {query.isFetchingNextPage ? '불러오는 중…' : '더 보기'}

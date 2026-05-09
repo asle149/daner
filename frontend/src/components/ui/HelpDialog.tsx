@@ -27,19 +27,19 @@ export function HelpDialog({ open, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md space-y-5 rounded bg-background p-8 text-sm"
+        className="w-full max-w-md space-y-5 rounded bg-background p-8 font-display text-sm"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-center text-2xl tracking-[0.2em]">DANER</h2>
-        <p className="leading-relaxed text-secondary">
+        <h2 className="text-center font-display text-2xl tracking-[0.2em]">DANER</h2>
+        <p className="font-display leading-relaxed text-secondary">
           하나의 단어가 하나의 방이 됩니다. 같은 단어를 떠올린 사람들이 서로 이야기를 주고받는
           곳이에요. 혹은 친구끼리 우리만의 단어방을 만들 수도 있죠.
         </p>
-        <p className="leading-relaxed text-secondary">
+        <p className="font-display leading-relaxed text-secondary">
           이미 누군가 머물렀던 단어라면 그 안에 남겨진 생각들을 만날 수 있습니다. 아직 아무도
           찾지 않은 단어라면 당신의 한 마디로 새로운 방이 열려요.
         </p>
-        <div className="border-t border-dashed border-hairline pt-4 text-tertiary">
+        <div className="border-t border-dashed border-hairline pt-4 font-display text-tertiary">
           <p className="mb-1 text-[11px] tracking-widest">의견·문의</p>
           <a
             href={`mailto:${FEEDBACK_EMAIL}`}
@@ -49,7 +49,7 @@ export function HelpDialog({ open, onClose }: Props) {
           </a>
         </div>
         <div className="text-right">
-          <button type="button" onClick={onClose} className="text-tertiary">
+          <button type="button" onClick={onClose} className="font-display text-tertiary">
             닫기
           </button>
         </div>

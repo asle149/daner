@@ -41,11 +41,11 @@ export default function MyProfilePage() {
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 pb-16">
         <header className="mt-12 text-center">
           <h1 className="font-display text-3xl font-bold">{user?.nickname ?? ''}</h1>
-          <p className="mt-2 text-sm text-secondary">
+          <p className="mt-2 font-display text-sm text-secondary">
             {allWords.length}개의 단어를 모았어요
           </p>
           {top3.length > 0 ? (
-            <div className="mt-5 flex items-center justify-center gap-5 text-sm text-secondary">
+            <div className="mt-5 flex items-center justify-center gap-5 font-display text-sm text-secondary">
               {top3.map((w) => (
                 <a
                   key={w.id}
@@ -65,7 +65,7 @@ export default function MyProfilePage() {
           <button
             type="button"
             onClick={() => void profile.fetchNextPage()}
-            className="mt-6 w-full py-2 text-xs text-tertiary"
+            className="mt-6 w-full py-2 font-display text-xs text-tertiary"
             disabled={profile.isFetchingNextPage}
           >
             {profile.isFetchingNextPage ? '불러오는 중…' : '더 보기'}
@@ -76,7 +76,7 @@ export default function MyProfilePage() {
           <button
             type="button"
             onClick={onLogout}
-            className="text-[11px] tracking-widest text-tertiary hover:text-secondary"
+            className="font-display text-[11px] tracking-widest text-tertiary hover:text-secondary"
           >
             로그아웃
           </button>

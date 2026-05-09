@@ -65,16 +65,18 @@ export default function NotificationsPage() {
         <h1 className="mt-12 text-center font-display text-3xl font-bold">받은 마음</h1>
 
         {list.isLoading ? (
-          <p className="mt-12 text-center text-sm text-tertiary">불러오는 중…</p>
+          <p className="mt-12 text-center font-display text-sm text-tertiary">불러오는 중…</p>
         ) : groups.length === 0 ? (
-          <p className="mt-12 text-center text-sm text-tertiary">아직 받은 알림이 없어요</p>
+          <p className="mt-12 text-center font-display text-sm text-tertiary">
+            아직 받은 알림이 없어요
+          </p>
         ) : (
           <div className="mt-10 space-y-8">
             {groups.map(([word, items]) => (
               <section key={word}>
                 <Link
                   href={`/words/${encodeURIComponent(word)}`}
-                  className="text-[11px] tracking-widest text-tertiary"
+                  className="font-display text-[11px] tracking-widest text-tertiary"
                 >
                   {word}
                 </Link>
@@ -92,7 +94,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => void list.fetchNextPage()}
-            className="mt-6 w-full py-2 text-xs text-tertiary"
+            className="mt-6 w-full py-2 font-display text-xs text-tertiary"
             disabled={list.isFetchingNextPage}
           >
             {list.isFetchingNextPage ? '불러오는 중…' : '더 보기'}

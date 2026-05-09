@@ -3,7 +3,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 import { Header } from '@/components/ui/Header';
+import { Typewriter } from '@/components/ui/Typewriter';
 import { fetchHome } from '@/lib/api/endpoints';
 import { normalizeForRouting } from '@/lib/util/normalizeWord';
 
@@ -15,7 +17,6 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
-  // 첫 방문자는 /welcome 으로 안내. 본 페이지 렌더링은 그 이후.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!localStorage.getItem(VISITED_KEY)) {
@@ -46,20 +47,30 @@ export default function HomePage() {
       <Header />
       <main className="flex flex-1 flex-col items-center justify-center px-6 pb-16">
         <div className="w-full max-w-md text-center">
-          <p className="text-xl font-bold text-secondary">오늘의 단어는?</p>
-          <form onSubmit={onSubmit} className="mt-10">
+          <p className="font-display text-2xl font-bold text-secondary">
+            <Typewriter text="오늘의 단어는?" />
+          </p>
+          <form onSubmit={onSubmit} className="mt-8">
             <input
               autoFocus
-              className="input-underline text-center text-2xl"
+              className="font-display w-full bg-transparent text-center text-2xl outline-none"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               maxLength={20}
             />
+            <Image
+              src="/underline.png"
+              alt=""
+              width={320}
+              height={20}
+              priority
+              className="underline-image"
+            />
           </form>
-          <p className="mt-2 min-h-5 text-sm text-accent">{error}</p>
+          <p className="mt-2 min-h-5 font-display text-sm text-accent">{error}</p>
 
           {(home.data?.myWords.length ?? 0) > 0 ? (
-            <div className="mt-12 flex items-center justify-center gap-5 text-base text-tertiary/80">
+            <div className="mt-12 flex items-center justify-center gap-5 font-display text-base text-tertiary/80">
               {home.data!.myWords.slice(0, 3).map((w) => (
                 <a
                   key={w.id}
@@ -75,8 +86,8 @@ export default function HomePage() {
 
         {home.data?.popularWords.length ? (
           <div className="mt-auto pt-16 w-full max-w-md text-center">
-            <p className="text-xs tracking-widest text-tertiary">지금 모이는</p>
-            <div className="mt-3 flex items-center justify-center gap-6 text-base text-secondary">
+            <p className="font-display text-xs tracking-widest text-tertiary">지금 모이는</p>
+            <div className="mt-3 flex items-center justify-center gap-6 font-display text-base text-secondary">
               {home.data.popularWords.map((w) => (
                 <a
                   key={w.id}

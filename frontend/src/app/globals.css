@@ -72,3 +72,29 @@ body {
 .input-underline:focus {
   border-bottom-color: var(--foreground);
 }
+
+/* 손그림 밑줄 (PNG) — 입력창 아래에 그림 한 장 */
+.underline-image {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin: 0.25rem auto 0;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.85;
+}
+
+/* 타자기 깜빡 커서 */
+.caret {
+  display: inline-block;
+  margin-left: 1px;
+  font-weight: 400;
+  color: var(--foreground);
+  animation: caret-blink 1s steps(1, end) infinite;
+}
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}

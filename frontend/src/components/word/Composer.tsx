@@ -55,7 +55,7 @@ export function Composer(props: Props) {
     <form onSubmit={onSubmit} className="border-t border-dashed border-hairline pt-3">
       <div className="flex items-center gap-2">
         <input
-          className="input-underline flex-1 text-sm"
+          className="input-underline flex-1 font-display text-sm"
           placeholder={placeholder}
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -64,13 +64,13 @@ export function Composer(props: Props) {
         />
         <button
           type="submit"
-          className="text-sm text-secondary disabled:text-tertiary"
+          className="font-display text-sm text-secondary disabled:text-tertiary"
           disabled={mutation.isPending || !content.trim()}
         >
           {mutation.isPending ? '...' : '쓰기'}
         </button>
       </div>
-      <div className="mt-2 flex items-center justify-between text-[11px] text-tertiary">
+      <div className="mt-2 flex items-center justify-between font-display text-[12px] text-tertiary">
         {isAuthenticated ? (
           <label className="flex items-center gap-1">
             <input
@@ -79,7 +79,7 @@ export function Composer(props: Props) {
               onChange={(e) => setAnonymous(e.target.checked)}
               className="h-3 w-3"
             />
-            익명으로
+            익명
           </label>
         ) : (
           <span>비회원으로 한마디</span>
