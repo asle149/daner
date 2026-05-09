@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Comment } from '@/types/api';
 import { AuthorLine } from './AuthorLine';
 import { ReplyList } from './ReplyList';
@@ -10,8 +11,16 @@ import { Composer } from './Composer';
 import { timeAgo } from '@/lib/util/timeAgo';
 
 export function CommentItem({ comment, word }: { comment: Comment; word: string }) {
-  const [open, setOpen] = useState(false);
+  const searchParams = useSearchParams();
+  // 알림에서 답글로 들어온 경우: ?p={parentCommentId} 가 붙어옴.
+  // 이 댓글이 그 부모면 답글 목록을 자동으로 펼침.
+  const expandFromQuery = searchParams.get('p') === String(comment.id);
+  const [open, setOpen] = useState(expandFromQuery);
   const [composeReply, setComposeReply] = useState(false);
+
+  useEffect(() => {
+    if (expandFromQuery) setOpen(true);
+  }, [expandFromQuery]);
 
   const openReplies = () => {
     setOpen(true);

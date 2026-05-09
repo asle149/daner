@@ -21,7 +21,11 @@ export function ReplyList({ commentId, word }: { commentId: number; word: string
   return (
     <div className="divide-y divide-dashed divide-hairline">
       {replies.map((r) => (
-        <article key={r.id} className="space-y-1 py-3 first:pt-0">
+        <article
+          key={r.id}
+          id={`comment-${r.id}`}
+          className="space-y-1 py-3 first:pt-0 scroll-mt-24"
+        >
           <p className="font-display text-[15px] leading-relaxed text-secondary">{r.content}</p>
           <div className="flex items-center justify-between">
             <AuthorLine author={r.author} time={timeAgo(r.createdAt)} />

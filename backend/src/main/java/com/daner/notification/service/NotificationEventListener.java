@@ -43,11 +43,13 @@ public class NotificationEventListener {
         }
         // 답글 작성자가 익명을 체크해서 남겼으면 actorUser는 숨김 — 받은 사람이 누군지 추적 못함
         boolean anonymousReply = reply.getAnonymousLabel() != null;
+        // notif.comment = reply 로 저장. 그래야 알림 클릭 시 답글 자체로 스크롤 가능.
+        // 부모 댓글 정보는 응답 시점에 reply.parent로 도출.
         notificationRepository.save(Notification.builder()
                 .user(parent.getUser())
                 .type(NotificationType.REPLY)
                 .word(parent.getWord())
-                .comment(parent)
+                .comment(reply)
                 .actorUser(anonymousReply ? null : reply.getUser())
                 .actorLabel(reply.getAnonymousLabel())
                 .preview(truncate(reply.getContent()))

@@ -90,6 +90,16 @@ input[type="checkbox"] {
   opacity: 0.9;
 }
 
+/* 알림에서 댓글로 점프했을 때 잠깐 하이라이트 */
+.comment-flash {
+  animation: comment-flash 1.6s ease-out;
+  border-radius: 4px;
+}
+@keyframes comment-flash {
+  0% { background-color: var(--hairline); }
+  100% { background-color: transparent; }
+}
+
 /* 타자기 깜빡 커서 */
 .caret {
   display: inline-block;

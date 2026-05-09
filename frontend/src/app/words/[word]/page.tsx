@@ -16,7 +16,7 @@ export default function WordRoomPage({ params }: { params: Promise<{ word: strin
     queryFn: () => fetchWordRoom(word),
   });
 
-  // 알림 등에서 #comment-123 해시로 들어오면 댓글 로드 후 그 댓글로 스크롤
+  // 알림 등에서 #comment-123 해시로 들어오면 댓글 로드 후 그 댓글로 스크롤 + 잠깐 하이라이트
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const hash = window.location.hash;
@@ -28,9 +28,11 @@ export default function WordRoomPage({ params }: { params: Promise<{ word: strin
       const el = document.getElementById(id);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('comment-flash');
+        window.setTimeout(() => el.classList.remove('comment-flash'), 1600);
         return;
       }
-      if (attempts++ < 10) {
+      if (attempts++ < 15) {
         window.setTimeout(tick, 200);
       }
     };

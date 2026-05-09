@@ -150,19 +150,22 @@ export default function NotificationsPage() {
 function NotificationRow({ bucket }: { bucket: Bucket }) {
   const n = bucket.rep;
   const dimmed = n.isRead ? 'opacity-60' : '';
-  const href = `/words/${encodeURIComponent(n.word)}#comment-${n.commentId}`;
+  // 답글이면 부모 댓글 ID를 ?p= 로 같이 넘겨야 도착 후 답글 목록이 자동으로 펼쳐짐.
+  const params = bucket.kind === 'reply' && n.parentCommentId
+    ? `?p=${n.parentCommentId}`
+    : '';
+  const href = `/words/${encodeURIComponent(n.word)}${params}#comment-${n.commentId}`;
 
   let headline: string;
   if (bucket.kind === 'reply') {
-    // 답글: 익명이면 누군가, 비익명이면 닉네임
-    const name = n.actor.nickname ?? '누군가';
-    headline = `${name}님이 답글을 남겼어요`;
+    // 답글: 익명이면 "누군가가", 비익명이면 "{닉네임}님이"
+    const name = n.actor.nickname;
+    headline = name ? `${name}님이 답글을 남겼어요` : '누군가가 답글을 남겼어요';
   } else {
-    // 좋아요: actor 숨김, 2명 이상이면 N명 집계
-    headline =
-      bucket.count >= 2
-        ? `${bucket.count}명이 ♡를 눌렀어요`
-        : '♡를 받았어요';
+    // 좋아요: actor 숨김. 1개면 "누군가가", 2명 이상이면 "N명이"
+    headline = bucket.count >= 2
+      ? `${bucket.count}명이 ♡를 눌렀어요`
+      : '누군가가 ♡를 눌렀어요';
   }
 
   return (
@@ -172,12 +175,10 @@ function NotificationRow({ bucket }: { bucket: Bucket }) {
     >
       <p>{headline}</p>
       {n.commentPreview ? (
-        <p className="text-tertiary">
-          내 댓글: &ldquo;{ellipsize(n.commentPreview, 40)}&rdquo;
-        </p>
+        <p className="text-sm text-tertiary">{ellipsize(n.commentPreview, 60)}</p>
       ) : null}
       {bucket.kind === 'reply' && n.preview ? (
-        <p className="text-secondary">&ldquo;{ellipsize(n.preview, 60)}&rdquo;</p>
+        <p className="text-sm text-secondary">{ellipsize(n.preview, 60)}</p>
       ) : null}
       <p className="text-[12px] text-tertiary">{timeAgo(n.createdAt)}</p>
     </Link>

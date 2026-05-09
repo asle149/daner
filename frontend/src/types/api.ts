@@ -102,6 +102,7 @@ export type Notification = {
   type: 'reply' | 'like';
   word: string;
   commentId: number;
+  parentCommentId: number | null;
   actor: { nickname?: string; label?: string };
   preview: string | null;
   commentPreview: string | null;
