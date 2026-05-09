@@ -104,6 +104,7 @@ export type Notification = {
   commentId: number;
   actor: { nickname?: string; label?: string };
   preview: string | null;
+  commentPreview: string | null;
   isRead: boolean;
   createdAt: string;
 };

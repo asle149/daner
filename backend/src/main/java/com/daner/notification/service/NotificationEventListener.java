@@ -41,12 +41,14 @@ public class NotificationEventListener {
         if (reply.getUser() != null && reply.getUser().getId().equals(parent.getUser().getId())) {
             return; // do not notify self
         }
+        // 답글 작성자가 익명을 체크해서 남겼으면 actorUser는 숨김 — 받은 사람이 누군지 추적 못함
+        boolean anonymousReply = reply.getAnonymousLabel() != null;
         notificationRepository.save(Notification.builder()
                 .user(parent.getUser())
                 .type(NotificationType.REPLY)
                 .word(parent.getWord())
                 .comment(parent)
-                .actorUser(reply.getUser())
+                .actorUser(anonymousReply ? null : reply.getUser())
                 .actorLabel(reply.getAnonymousLabel())
                 .preview(truncate(reply.getContent()))
                 .build());
@@ -65,6 +67,7 @@ public class NotificationEventListener {
         User actor = event.actorUserId() != null
                 ? userRepository.findById(event.actorUserId()).orElse(null)
                 : null;
+        // 좋아요는 actor를 화면에 노출하지 않지만(프론트 정책), 향후 운영용으로 actorUser 자체는 보관
         notificationRepository.save(Notification.builder()
                 .user(comment.getUser())
                 .type(NotificationType.LIKE)

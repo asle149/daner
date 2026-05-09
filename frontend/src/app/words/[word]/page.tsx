@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/ui/Header';
 import { CommentList } from '@/components/word/CommentList';
@@ -15,6 +15,27 @@ export default function WordRoomPage({ params }: { params: Promise<{ word: strin
     queryKey: ['word', word],
     queryFn: () => fetchWordRoom(word),
   });
+
+  // 알림 등에서 #comment-123 해시로 들어오면 댓글 로드 후 그 댓글로 스크롤
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash;
+    if (!hash || !hash.startsWith('#comment-')) return;
+    if (room.isLoading) return;
+    const id = hash.slice(1);
+    let attempts = 0;
+    const tick = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (attempts++ < 10) {
+        window.setTimeout(tick, 200);
+      }
+    };
+    tick();
+  }, [room.isLoading]);
 
   return (
     <>

@@ -19,7 +19,7 @@ export function CommentItem({ comment, word }: { comment: Comment; word: string 
   };
 
   return (
-    <article className="py-3">
+    <article id={`comment-${comment.id}`} className="py-3 scroll-mt-24">
       <p className="font-display text-base leading-relaxed">{comment.content}</p>
       <div className="mt-1 flex items-center justify-between">
         <AuthorLine author={comment.author} time={timeAgo(comment.createdAt)} />

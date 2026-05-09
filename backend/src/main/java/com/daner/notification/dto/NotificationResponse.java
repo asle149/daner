@@ -13,14 +13,21 @@ public record NotificationResponse(
         Long commentId,
         Actor actor,
         String preview,
+        String commentPreview,
         boolean isRead,
         LocalDateTime createdAt
 ) {
 
+    private static final int COMMENT_PREVIEW_MAX = 80;
+
     public static NotificationResponse from(Notification n) {
-        Actor actor = n.getActorUser() != null
-                ? new Actor(n.getActorUser().getNickname(), null)
-                : new Actor(null, n.getActorLabel());
+        // 익명으로 작성됐으면(actorLabel != null) 닉네임을 절대 노출하지 않음.
+        Actor actor = n.getActorLabel() != null
+                ? new Actor(null, n.getActorLabel())
+                : n.getActorUser() != null
+                        ? new Actor(n.getActorUser().getNickname(), null)
+                        : new Actor(null, null);
+        String content = n.getComment() != null ? n.getComment().getContent() : null;
         return new NotificationResponse(
                 n.getId(),
                 n.getType().name().toLowerCase(),
@@ -28,8 +35,14 @@ public record NotificationResponse(
                 n.getComment().getId(),
                 actor,
                 n.getPreview(),
+                truncate(content),
                 n.isRead(),
                 n.getCreatedAt());
+    }
+
+    private static String truncate(String s) {
+        if (s == null) return null;
+        return s.length() <= COMMENT_PREVIEW_MAX ? s : s.substring(0, COMMENT_PREVIEW_MAX);
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

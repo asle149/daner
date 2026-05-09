@@ -10,6 +10,10 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { timeAgo } from '@/lib/util/timeAgo';
 import type { Notification } from '@/types/api';
 
+type Bucket =
+  | { kind: 'reply'; key: string; word: string; commentId: number; rep: Notification; ids: number[] }
+  | { kind: 'like'; key: string; word: string; commentId: number; rep: Notification; ids: number[]; count: number };
+
 export default function NotificationsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -39,7 +43,6 @@ export default function NotificationsPage() {
     },
   });
 
-  // 첫 페이지 로드되면 안 읽은 알림을 자동 읽음 처리
   useEffect(() => {
     if (!notifications.length || markRead.isPending) return;
     const unreadIds = notifications.filter((n) => !n.isRead).map((n) => n.id);
@@ -47,16 +50,55 @@ export default function NotificationsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications.length]);
 
-  // 단어로 그룹화
-  const groups = useMemo(() => {
-    const m = new Map<string, Notification[]>();
+  // 답글은 개별 알림, 같은 댓글의 좋아요는 합쳐서 한 줄로
+  const buckets: Bucket[] = useMemo(() => {
+    const out: Bucket[] = [];
+    const likeBucketByComment = new Map<number, Bucket & { kind: 'like' }>();
     for (const n of notifications) {
-      const arr = m.get(n.word) ?? [];
-      arr.push(n);
-      m.set(n.word, arr);
+      if (n.type === 'reply') {
+        out.push({
+          kind: 'reply',
+          key: `r-${n.id}`,
+          word: n.word,
+          commentId: n.commentId,
+          rep: n,
+          ids: [n.id],
+        });
+        continue;
+      }
+      const existing = likeBucketByComment.get(n.commentId);
+      if (existing) {
+        existing.ids.push(n.id);
+        existing.count += 1;
+        // 가장 최신을 대표로
+        if (n.createdAt > existing.rep.createdAt) existing.rep = n;
+      } else {
+        const b: Bucket & { kind: 'like' } = {
+          kind: 'like',
+          key: `l-${n.commentId}`,
+          word: n.word,
+          commentId: n.commentId,
+          rep: n,
+          ids: [n.id],
+          count: 1,
+        };
+        likeBucketByComment.set(n.commentId, b);
+        out.push(b);
+      }
+    }
+    return out;
+  }, [notifications]);
+
+  // 단어로 그룹
+  const groups = useMemo(() => {
+    const m = new Map<string, Bucket[]>();
+    for (const b of buckets) {
+      const arr = m.get(b.word) ?? [];
+      arr.push(b);
+      m.set(b.word, arr);
     }
     return Array.from(m.entries());
-  }, [notifications]);
+  }, [buckets]);
 
   return (
     <>
@@ -81,8 +123,8 @@ export default function NotificationsPage() {
                   {word}
                 </Link>
                 <div className="mt-2 space-y-3">
-                  {items.map((n) => (
-                    <NotificationRow key={n.id} n={n} />
+                  {items.map((b) => (
+                    <NotificationRow key={b.key} bucket={b} />
                   ))}
                 </div>
               </section>
@@ -105,20 +147,44 @@ export default function NotificationsPage() {
   );
 }
 
-function NotificationRow({ n }: { n: Notification }) {
-  const actor = n.actor.nickname ?? n.actor.label ?? '누군가';
+function NotificationRow({ bucket }: { bucket: Bucket }) {
+  const n = bucket.rep;
   const dimmed = n.isRead ? 'opacity-60' : '';
+  const href = `/words/${encodeURIComponent(n.word)}#comment-${n.commentId}`;
+
+  let headline: string;
+  if (bucket.kind === 'reply') {
+    // 답글: 익명이면 누군가, 비익명이면 닉네임
+    const name = n.actor.nickname ?? '누군가';
+    headline = `${name}님이 답글을 남겼어요`;
+  } else {
+    // 좋아요: actor 숨김, 2명 이상이면 N명 집계
+    headline =
+      bucket.count >= 2
+        ? `${bucket.count}명이 ♡를 눌렀어요`
+        : '♡를 받았어요';
+  }
+
   return (
-    <div className={`font-display text-base leading-relaxed ${dimmed}`}>
-      {n.type === 'reply' ? (
-        <>
-          <p>{actor}님이 답글을 남겼어요</p>
-          {n.preview ? <p className="text-secondary">&ldquo;{n.preview}&rdquo;</p> : null}
-        </>
-      ) : (
-        <p>{actor}님이 ♡를 눌렀어요</p>
-      )}
+    <Link
+      href={href}
+      className={`block rounded-sm font-display text-base leading-relaxed transition-colors hover:bg-hairline/30 ${dimmed}`}
+    >
+      <p>{headline}</p>
+      {n.commentPreview ? (
+        <p className="text-tertiary">
+          내 댓글: &ldquo;{ellipsize(n.commentPreview, 40)}&rdquo;
+        </p>
+      ) : null}
+      {bucket.kind === 'reply' && n.preview ? (
+        <p className="text-secondary">&ldquo;{ellipsize(n.preview, 60)}&rdquo;</p>
+      ) : null}
       <p className="text-[12px] text-tertiary">{timeAgo(n.createdAt)}</p>
-    </div>
+    </Link>
   );
+}
+
+function ellipsize(s: string, max: number): string {
+  if (s.length <= max) return s;
+  return s.slice(0, max) + '…';
 }
