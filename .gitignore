@@ -50,3 +50,6 @@ application-local.properties
 ### Local-only project tooling (not pushed) ###
 CLAUDE.md
 .ralph/
+
+### Stray font files at repo root (use frontend/public/fonts/ instead) ###
+/MemomentKkukkukk.*

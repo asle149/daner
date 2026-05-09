@@ -21,7 +21,7 @@ export default function WordRoomPage({ params }: { params: Promise<{ word: strin
       <Header />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 pb-32">
         <header className="mt-12 text-center">
-          <h1 className="text-3xl font-medium tracking-wide">{word}</h1>
+          <h1 className="font-display text-4xl tracking-wide">{word}</h1>
           {room.data?.exists ? (
             <p className="mt-2 text-sm text-secondary">{room.data.commentCount}개의 마음</p>
           ) : room.data?.exists === false ? (

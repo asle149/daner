@@ -30,7 +30,7 @@ export function HelpDialog({ open, onClose }: Props) {
         className="w-full max-w-md space-y-5 rounded bg-background p-8 text-sm"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-center text-lg tracking-[0.2em]">DANER</h2>
+        <h2 className="text-center font-display text-2xl tracking-[0.2em]">DANER</h2>
         <p className="leading-relaxed text-secondary">
           하나의 단어가 하나의 방이 됩니다. 같은 단어를 떠올린 사람들이 한마디씩 남기는 곳이에요.
         </p>

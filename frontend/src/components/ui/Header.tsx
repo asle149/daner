@@ -25,7 +25,7 @@ export function Header() {
           ?
         </button>
 
-        <Link href="/" className="font-medium tracking-[0.2em] text-foreground">
+        <Link href="/" className="font-display text-lg tracking-[0.2em] text-foreground">
           DANER
         </Link>
 
