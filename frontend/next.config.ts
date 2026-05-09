@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // dev에서 N 뱃지(Next dev indicator) 숨기기
+  devIndicators: false,
 };
 
 export default nextConfig;

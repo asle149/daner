@@ -80,6 +80,7 @@ public class CommentService {
                 .word(word)
                 .user(author.user)
                 .anonymousLabel(author.label)
+                .anonymousToken(author.user == null ? anonymousToken : null)
                 .content(request.content())
                 .build());
         word.increaseCommentCount();
@@ -102,6 +103,7 @@ public class CommentService {
                 .user(author.user)
                 .parent(parent)
                 .anonymousLabel(author.label)
+                .anonymousToken(author.user == null ? anonymousToken : null)
                 .content(request.content())
                 .build());
         word.increaseCommentCount();
@@ -110,13 +112,18 @@ public class CommentService {
     }
 
     @Transactional
-    public void delete(Long commentId, Long currentUserId) {
+    public void delete(Long commentId, Long currentUserId, UUID anonymousToken) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
-        if (comment.getUser() == null || !comment.getUser().getId().equals(currentUserId)) {
+
+        boolean canDelete = (comment.getUser() != null && currentUserId != null
+                && comment.getUser().getId().equals(currentUserId))
+                || comment.wasWrittenByAnonymousToken(anonymousToken);
+        if (!canDelete) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
-        if (!comment.isReply() && commentRepository.countByWordIdAndParentIsNull(comment.getWord().getId()) >= 0) {
+
+        if (!comment.isReply()) {
             long replyCount = commentRepository.countRepliesByParentIds(Set.of(comment.getId())).stream()
                     .mapToLong(CommentRepository.ParentReplyCount::getCnt).sum();
             if (replyCount > 0) {

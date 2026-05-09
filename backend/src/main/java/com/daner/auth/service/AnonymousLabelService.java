@@ -23,8 +23,7 @@ public class AnonymousLabelService {
     }
 
     private String assign(UUID token, Word word) {
-        long count = anonymousSessionRepository.countByWordId(word.getId());
-        String label = "익명" + (count + 1);
+        String label = "익명";
         anonymousSessionRepository.save(AnonymousSession.builder()
                 .token(token).word(word).label(label).build());
         return label;

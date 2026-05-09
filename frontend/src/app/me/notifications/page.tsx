@@ -60,7 +60,7 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <Header back />
+      <Header />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 pb-12">
         <h1 className="mt-12 text-center text-[22px]">받은 마음</h1>
 

@@ -74,7 +74,7 @@ class CommentControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.author.type").value("anonymous"))
-                .andExpect(jsonPath("$.data.author.label").value("익명1"));
+                .andExpect(jsonPath("$.data.author.label").value("익명"));
 
         // same token in same room reuses the same label
         mockMvc.perform(post("/words/{word}/comments", "퇴근")
@@ -82,7 +82,7 @@ class CommentControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("content", "퇴근만이 살길"))))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.author.label").value("익명1"));
+                .andExpect(jsonPath("$.data.author.label").value("익명"));
     }
 
     @Test

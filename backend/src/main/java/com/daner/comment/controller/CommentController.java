@@ -56,11 +56,13 @@ public class CommentController {
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(
             @PathVariable Long id,
-            @AuthenticationPrincipal Long currentUserId) {
-        if (currentUserId == null) {
+            @AuthenticationPrincipal Long currentUserId,
+            @RequestHeader(value = AnonymousTokenResolver.HEADER, required = false) String anonymousHeader) {
+        UUID anonymousToken = anonymousTokenResolver.resolve(anonymousHeader).orElse(null);
+        if (currentUserId == null && anonymousToken == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
-        commentService.delete(id, currentUserId);
+        commentService.delete(id, currentUserId, anonymousToken);
         return ApiResponse.ok();
     }
 }

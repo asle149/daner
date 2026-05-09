@@ -19,14 +19,19 @@ export function ReplyList({ commentId, word }: { commentId: number; word: string
   const replies: Reply[] = query.data?.pages.flatMap((p) => p.replies) ?? [];
 
   return (
-    <div className="ml-4 mt-3 space-y-3 border-l border-dashed border-hairline pl-3">
+    <div className="divide-y divide-dashed divide-hairline">
       {replies.map((r) => (
-        <article key={r.id} className="space-y-1">
+        <article key={r.id} className="space-y-1 py-3 first:pt-0">
           <p className="text-[13px] text-secondary">{r.content}</p>
           <div className="flex items-center justify-between">
             <AuthorLine author={r.author} time={timeAgo(r.createdAt)} />
             <div className="flex items-center gap-3">
-              <LikeButton commentId={r.id} initialCount={r.likeCount} initialLiked={r.isLiked} />
+              <LikeButton
+                commentId={r.id}
+                initialCount={r.likeCount}
+                initialLiked={r.isLiked}
+                word={word}
+              />
               <DeleteButton commentId={r.id} author={r.author} word={word} />
             </div>
           </div>
@@ -36,7 +41,7 @@ export function ReplyList({ commentId, word }: { commentId: number; word: string
         <button
           type="button"
           onClick={() => void query.fetchNextPage()}
-          className="text-[11px] text-tertiary"
+          className="py-2 text-[11px] text-tertiary"
           disabled={query.isFetchingNextPage}
         >
           {query.isFetchingNextPage ? '불러오는 중…' : '더 보기'}

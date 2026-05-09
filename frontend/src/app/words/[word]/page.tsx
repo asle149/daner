@@ -18,7 +18,7 @@ export default function WordRoomPage({ params }: { params: Promise<{ word: strin
 
   return (
     <>
-      <Header back />
+      <Header />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 pb-32">
         <header className="mt-12 text-center">
           <h1 className="text-3xl font-medium tracking-wide">{word}</h1>

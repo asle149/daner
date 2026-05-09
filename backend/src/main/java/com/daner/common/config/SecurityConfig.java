@@ -61,6 +61,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,
                                 "/words/*/comments", "/comments/*/replies"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/comments/*").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth
                         .redirectionEndpoint(endpoint -> endpoint.baseUri("/auth/{registrationId}/callback"))

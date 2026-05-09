@@ -74,22 +74,45 @@ class HomeControllerIntegrationTest {
     }
 
     @Test
-    void batch_recalculates_popular_words_from_recent_comments() {
+    void batch_recalculates_popular_words_when_threshold_met() {
         User user = userRepository.save(User.builder()
                 .oauthProvider("google").oauthId("uid").nickname("감자전").build());
         Word top = wordRepository.save(Word.builder().word("퇴근").build());
         Word second = wordRepository.save(Word.builder().word("도파민").build());
-        for (int i = 0; i < 3; i++) {
+        Word ignored = wordRepository.save(Word.builder().word("감자전").build());
+        // top: 12 comments (above threshold)
+        for (int i = 0; i < 12; i++) {
             commentRepository.save(Comment.builder().word(top).user(user).content("c" + i).build());
         }
-        commentRepository.save(Comment.builder().word(second).user(user).content("c").build());
+        // second: 10 comments (at threshold)
+        for (int i = 0; i < 10; i++) {
+            commentRepository.save(Comment.builder().word(second).user(user).content("d" + i).build());
+        }
+        // ignored: only 3 (below threshold) — should not appear
+        for (int i = 0; i < 3; i++) {
+            commentRepository.save(Comment.builder().word(ignored).user(user).content("e" + i).build());
+        }
 
         popularWordBatchService.recalculate();
 
         var rows = popularWordDailyRepository.findAllByOrderByRankPositionAsc();
         assertThat(rows).hasSize(2);
         assertThat(rows.get(0).getWordId()).isEqualTo(top.getId());
-        assertThat(rows.get(0).getCommentCount()).isEqualTo(3);
+        assertThat(rows.get(0).getCommentCount()).isEqualTo(12);
         assertThat(rows.get(1).getWordId()).isEqualTo(second.getId());
+    }
+
+    @Test
+    void batch_skips_words_below_threshold() {
+        User user = userRepository.save(User.builder()
+                .oauthProvider("google").oauthId("uid").nickname("감자전").build());
+        Word w = wordRepository.save(Word.builder().word("퇴근").build());
+        for (int i = 0; i < 5; i++) {
+            commentRepository.save(Comment.builder().word(w).user(user).content("c" + i).build());
+        }
+
+        popularWordBatchService.recalculate();
+
+        assertThat(popularWordDailyRepository.findAllByOrderByRankPositionAsc()).isEmpty();
     }
 }

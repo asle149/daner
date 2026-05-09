@@ -12,11 +12,18 @@ import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    Slice<Comment> findByWordIdAndParentIsNullOrderByCreatedAtDesc(Long wordId, Pageable pageable);
+    @Query("SELECT c FROM Comment c WHERE c.word.id = :wordId AND c.parent IS NULL " +
+            "ORDER BY c.createdAt DESC, c.id DESC")
+    Slice<Comment> findByWordIdAndParentIsNullOrderByCreatedAtDesc(@Param("wordId") Long wordId, Pageable pageable);
 
-    Slice<Comment> findByWordIdAndParentIsNullOrderByLikeCountDescCreatedAtDesc(Long wordId, Pageable pageable);
+    @Query("SELECT c FROM Comment c WHERE c.word.id = :wordId AND c.parent IS NULL " +
+            "ORDER BY c.likeCount DESC, c.createdAt DESC, c.id DESC")
+    Slice<Comment> findByWordIdAndParentIsNullOrderByLikeCountDescCreatedAtDesc(
+            @Param("wordId") Long wordId, Pageable pageable);
 
-    Slice<Comment> findByParentIdOrderByCreatedAtAsc(Long parentId, Pageable pageable);
+    @Query("SELECT c FROM Comment c WHERE c.parent.id = :parentId " +
+            "ORDER BY c.createdAt ASC, c.id ASC")
+    Slice<Comment> findByParentIdOrderByCreatedAtAsc(@Param("parentId") Long parentId, Pageable pageable);
 
     long countByWordIdAndParentIsNull(Long wordId);
 

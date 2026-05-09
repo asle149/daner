@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 
 export default function MyProfilePage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) router.replace('/');
@@ -30,9 +30,14 @@ export default function MyProfilePage() {
     .sort((a, b) => b.myCommentCount - a.myCommentCount)
     .slice(0, 3);
 
+  const onLogout = async () => {
+    await logout();
+    router.replace('/');
+  };
+
   return (
     <>
-      <Header back />
+      <Header />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 pb-16">
         <header className="mt-12 text-center">
           <h1 className="text-[22px] font-medium">{user?.nickname ?? ''}</h1>
@@ -40,9 +45,17 @@ export default function MyProfilePage() {
             {allWords.length}개의 단어를 모았어요
           </p>
           {top3.length > 0 ? (
-            <p className="mt-4 text-[11px] tracking-widest text-tertiary">
-              자주 가는 단어 · {top3.map((w) => w.word).join(' · ')}
-            </p>
+            <div className="mt-5 flex items-center justify-center gap-5 text-sm text-secondary">
+              {top3.map((w) => (
+                <a
+                  key={w.id}
+                  href={`/words/${encodeURIComponent(w.word)}`}
+                  className="hover:text-foreground"
+                >
+                  {w.word}
+                </a>
+              ))}
+            </div>
           ) : null}
         </header>
 
@@ -58,6 +71,16 @@ export default function MyProfilePage() {
             {profile.isFetchingNextPage ? '불러오는 중…' : '더 보기'}
           </button>
         ) : null}
+
+        <div className="mt-12 text-center">
+          <button
+            type="button"
+            onClick={onLogout}
+            className="text-[11px] tracking-widest text-tertiary hover:text-secondary"
+          >
+            로그아웃
+          </button>
+        </div>
       </main>
     </>
   );

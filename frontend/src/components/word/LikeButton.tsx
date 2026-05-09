@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { likeComment, unlikeComment } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -10,30 +10,35 @@ type Props = {
   commentId: number;
   initialCount: number;
   initialLiked: boolean;
+  word: string;
 };
 
-export function LikeButton({ commentId, initialCount, initialLiked }: Props) {
+export function LikeButton({ commentId, initialCount, initialLiked, word }: Props) {
   const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
   const [count, setCount] = useState(initialCount);
   const [liked, setLiked] = useState(initialLiked);
 
+  // 부모가 새 데이터로 다시 렌더되면 동기화 (정렬 토글, 댓글 invalidate 후 등)
+  useEffect(() => {
+    setCount(initialCount);
+    setLiked(initialLiked);
+  }, [initialCount, initialLiked]);
+
   const toggle = useMutation({
-    mutationFn: () => (liked ? unlikeComment(commentId) : likeComment(commentId)),
-    onMutate: () => {
-      setLiked((v) => !v);
-      setCount((c) => c + (liked ? -1 : 1));
-    },
-    onError: (err) => {
-      // rollback
-      setLiked((v) => !v);
-      setCount((c) => c + (liked ? 1 : -1));
-      if (err instanceof ApiError && err.code === 'ALREADY_LIKED') {
-        setLiked(true);
-      }
-    },
+    mutationFn: (currentlyLiked: boolean) =>
+      currentlyLiked ? unlikeComment(commentId) : likeComment(commentId),
     onSuccess: (data) => {
       setCount(data.likeCount);
       setLiked(data.isLiked);
+      void queryClient.invalidateQueries({ queryKey: ['comments', word] });
+      void queryClient.invalidateQueries({ queryKey: ['replies'] });
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.code === 'ALREADY_LIKED') {
+        setLiked(true);
+      }
+      void queryClient.invalidateQueries({ queryKey: ['comments', word] });
     },
   });
 
@@ -41,15 +46,23 @@ export function LikeButton({ commentId, initialCount, initialLiked }: Props) {
     return <span className="text-[11px] text-tertiary">♡ {count}</span>;
   }
 
+  const onClick = () => {
+    if (toggle.isPending) return;
+    toggle.mutate(liked);
+  };
+
   return (
     <button
       type="button"
-      onClick={() => toggle.mutate()}
-      className="text-[11px] text-tertiary disabled:opacity-50"
+      onClick={onClick}
+      className="text-[11px] disabled:opacity-50"
       disabled={toggle.isPending}
       aria-pressed={liked}
     >
-      <span className={liked ? 'text-accent' : undefined}>♡</span> {count}
+      <span className={liked ? 'text-accent' : 'text-tertiary'}>
+        {liked ? '♥' : '♡'}
+      </span>{' '}
+      <span className="text-tertiary">{count}</span>
     </button>
   );
 }

@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "comments")
@@ -44,6 +45,9 @@ public class Comment {
     @Column(name = "anonymous_label", length = 10)
     private String anonymousLabel;
 
+    @Column(name = "anonymous_token")
+    private UUID anonymousToken;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
@@ -55,12 +59,18 @@ public class Comment {
     private LocalDateTime createdAt;
 
     @Builder
-    private Comment(Word word, User user, Comment parent, String anonymousLabel, String content) {
+    private Comment(Word word, User user, Comment parent, String anonymousLabel,
+                    UUID anonymousToken, String content) {
         this.word = word;
         this.user = user;
         this.parent = parent;
         this.anonymousLabel = anonymousLabel;
+        this.anonymousToken = anonymousToken;
         this.content = content;
+    }
+
+    public boolean wasWrittenByAnonymousToken(UUID candidate) {
+        return this.user == null && candidate != null && candidate.equals(this.anonymousToken);
     }
 
     public boolean isReply() {

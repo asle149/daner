@@ -20,6 +20,7 @@ public class PopularWordBatchService {
 
     private static final int TOP_N = 3;
     private static final int WINDOW_HOURS = 24;
+    private static final int MIN_COMMENTS_THRESHOLD = 10;
 
     private final CommentRepository commentRepository;
     private final PopularWordDailyRepository popularWordDailyRepository;
@@ -29,13 +30,16 @@ public class PopularWordBatchService {
     public void recalculate() {
         LocalDateTime since = LocalDateTime.now().minusHours(WINDOW_HOURS);
         List<CommentRepository.WordCommentCount> top = commentRepository
-                .findTopWordsByCommentCountSince(since, PageRequest.of(0, TOP_N));
+                .findTopWordsByCommentCountSince(since, PageRequest.of(0, TOP_N)).stream()
+                .filter(e -> e.getCnt() >= MIN_COMMENTS_THRESHOLD)
+                .toList();
         popularWordDailyRepository.deleteAllInBatch();
         int rank = 1;
         for (CommentRepository.WordCommentCount entry : top) {
             popularWordDailyRepository.save(new PopularWordDaily(
                     entry.getWordId(), entry.getCnt().intValue(), rank++));
         }
-        log.info("popular words recalculated: {} entries since {}", top.size(), since);
+        log.info("popular words recalculated: {} entries (>={} comments) since {}",
+                top.size(), MIN_COMMENTS_THRESHOLD, since);
     }
 }
