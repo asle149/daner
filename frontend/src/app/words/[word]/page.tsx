@@ -24,7 +24,7 @@ export default function WordRoomPage({ params }: { params: Promise<{ word: strin
           <h1 className="font-display text-5xl font-bold tracking-wide">{word}</h1>
           {room.data?.exists ? (
             <p className="mt-2 font-display text-sm text-secondary">
-              {room.data.commentCount}개의 마음
+              {room.data.commentCount}개의 이야기
             </p>
           ) : room.data?.exists === false ? (
             <p className="mt-2 font-display text-sm text-secondary">{room.data.message}</p>

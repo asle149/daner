@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createComment, createReply } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
 import { useAuth } from '@/lib/auth/AuthContext';
+
+const ANONYMOUS_PREF_KEY = 'daner.compose.anonymous';
 
 type Props =
   | { kind: 'comment'; word: string; parentId?: undefined; onSent?: () => void }
@@ -16,6 +18,18 @@ export function Composer(props: Props) {
   const [content, setContent] = useState('');
   const [anonymous, setAnonymous] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setAnonymous(localStorage.getItem(ANONYMOUS_PREF_KEY) === '1');
+  }, []);
+
+  const updateAnonymous = (next: boolean) => {
+    setAnonymous(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(ANONYMOUS_PREF_KEY, next ? '1' : '0');
+    }
+  };
 
   const mutation = useMutation<unknown, Error>({
     mutationFn: async () => {
@@ -76,7 +90,7 @@ export function Composer(props: Props) {
             <input
               type="checkbox"
               checked={anonymous}
-              onChange={(e) => setAnonymous(e.target.checked)}
+              onChange={(e) => updateAnonymous(e.target.checked)}
               className="h-3 w-3"
             />
             익명

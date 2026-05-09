@@ -60,6 +60,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 체크박스 강조색 — 브라우저 기본 파란색 대신 본문 색으로 통일 */
+input[type="checkbox"] {
+  accent-color: var(--foreground);
+}
+
 /* 입력창은 밑줄 only */
 .input-underline {
   background: transparent;
