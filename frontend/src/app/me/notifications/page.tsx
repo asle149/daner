@@ -107,7 +107,7 @@ function NotificationRow({ n }: { n: Notification }) {
   const actor = n.actor.nickname ?? n.actor.label ?? '누군가';
   const dimmed = n.isRead ? 'opacity-60' : '';
   return (
-    <div className={`text-sm ${dimmed}`}>
+    <div className={`font-display text-base leading-relaxed ${dimmed}`}>
       {n.type === 'reply' ? (
         <>
           <p>{actor}님이 답글을 남겼어요</p>

@@ -44,10 +44,14 @@ export default function HomePage() {
   return (
     <>
       <Header />
-      <main className="flex flex-1 flex-col items-center px-6">
-        <div className="mt-24 w-full max-w-md text-center">
-          {showWelcome ? <WelcomeIntro onDismiss={dismissWelcome} /> : null}
+      <main className="flex flex-1 flex-col items-center justify-center px-6 pb-16">
+        {showWelcome ? (
+          <div className="w-full max-w-md text-center">
+            <WelcomeIntro onDismiss={dismissWelcome} />
+          </div>
+        ) : null}
 
+        <div className="w-full max-w-md text-center">
           <p className="font-display text-xl font-bold text-secondary">오늘의 단어는?</p>
           <form onSubmit={onSubmit} className="mt-10">
             <input
@@ -61,40 +65,36 @@ export default function HomePage() {
           <p className="mt-2 min-h-5 text-sm text-accent">{error}</p>
 
           {(home.data?.myWords.length ?? 0) > 0 ? (
-            <div className="mt-12">
-              <div className="flex items-center justify-center gap-5 text-base text-tertiary/80">
-                {home.data!.myWords.slice(0, 3).map((w) => (
-                  <a
-                    key={w.id}
-                    href={`/words/${encodeURIComponent(w.word)}`}
-                    className="hover:text-secondary"
-                  >
-                    {w.word}
-                  </a>
-                ))}
-              </div>
+            <div className="mt-12 flex items-center justify-center gap-5 text-base text-tertiary/80">
+              {home.data!.myWords.slice(0, 3).map((w) => (
+                <a
+                  key={w.id}
+                  href={`/words/${encodeURIComponent(w.word)}`}
+                  className="hover:text-secondary"
+                >
+                  {w.word}
+                </a>
+              ))}
             </div>
           ) : null}
         </div>
 
-        <div className="mt-auto mb-12 w-full max-w-md text-center">
-          {home.data?.popularWords.length ? (
-            <>
-              <p className="text-xs tracking-widest text-tertiary">지금 모이는</p>
-              <div className="mt-3 flex items-center justify-center gap-6 font-display text-base text-secondary">
-                {home.data.popularWords.map((w) => (
-                  <a
-                    key={w.id}
-                    href={`/words/${encodeURIComponent(w.word)}`}
-                    className="hover:text-foreground"
-                  >
-                    {w.word}
-                  </a>
-                ))}
-              </div>
-            </>
-          ) : null}
-        </div>
+        {home.data?.popularWords.length ? (
+          <div className="mt-auto pt-16 w-full max-w-md text-center">
+            <p className="text-xs tracking-widest text-tertiary">지금 모이는</p>
+            <div className="mt-3 flex items-center justify-center gap-6 font-display text-base text-secondary">
+              {home.data.popularWords.map((w) => (
+                <a
+                  key={w.id}
+                  href={`/words/${encodeURIComponent(w.word)}`}
+                  className="hover:text-foreground"
+                >
+                  {w.word}
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </main>
     </>
   );
@@ -102,7 +102,7 @@ export default function HomePage() {
 
 function WelcomeIntro({ onDismiss }: { onDismiss: () => void }) {
   return (
-    <section className="mb-16 space-y-4 text-left text-[13px] leading-relaxed text-secondary">
+    <section className="mb-16 space-y-4 text-left font-display text-[14px] leading-relaxed text-secondary">
       <p className="text-center font-display text-lg font-bold text-foreground">
         단어 하나로 시작되는 작은 방
       </p>
