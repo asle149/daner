@@ -131,7 +131,9 @@ public class CommentService {
                 throw new BusinessException(ErrorCode.COMMENT_HAS_REPLIES);
             }
         }
+        Word word = comment.getWord();
         commentRepository.delete(comment);
+        word.decreaseCommentCount();
     }
 
     private Author resolveAuthor(Word word, Long currentUserId, UUID anonymousToken, boolean wantsAnonymous) {

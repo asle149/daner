@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Header } from '@/components/ui/Header';
@@ -9,9 +9,12 @@ import { SkeletonBookshelf } from '@/components/ui/Skeleton';
 import { fetchMyProfile } from '@/lib/api/endpoints';
 import { useAuth } from '@/lib/auth/AuthContext';
 
+type SortMode = 'recent' | 'count';
+
 export default function MyProfilePage() {
   const router = useRouter();
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const [sort, setSort] = useState<SortMode>('recent');
 
   useEffect(() => {
     if (!loading && !isAuthenticated) router.replace('/');
@@ -26,9 +29,15 @@ export default function MyProfilePage() {
   });
 
   const allWords = profile.data?.pages.flatMap((p) => p.myWords) ?? [];
-  const top3 = [...allWords]
-    .sort((a, b) => b.myCommentCount - a.myCommentCount)
-    .slice(0, 3);
+  const sortedWords = useMemo(() => {
+    const arr = [...allWords];
+    if (sort === 'count') {
+      arr.sort((a, b) => b.myCommentCount - a.myCommentCount);
+    } else {
+      arr.sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt));
+    }
+    return arr;
+  }, [allWords, sort]);
 
   const onLogout = async () => {
     await logout();
@@ -44,22 +53,29 @@ export default function MyProfilePage() {
           <p className="mt-2 font-display text-sm text-secondary">
             {allWords.length}개의 단어를 모았어요
           </p>
-          {top3.length > 0 ? (
-            <div className="mt-5 flex items-center justify-center gap-5 font-display text-sm text-secondary">
-              {top3.map((w) => (
-                <a
-                  key={w.id}
-                  href={`/words/${encodeURIComponent(w.word)}`}
-                  className="hover:text-foreground"
-                >
-                  {w.word}
-                </a>
-              ))}
-            </div>
-          ) : null}
         </header>
 
-        {profile.isLoading ? <SkeletonBookshelf /> : <Bookshelf words={allWords} />}
+        {allWords.length > 0 ? (
+          <div className="mt-8 text-center font-display text-xs">
+            <button
+              type="button"
+              onClick={() => setSort('recent')}
+              className={sort === 'recent' ? 'text-foreground' : 'text-tertiary hover:text-secondary'}
+            >
+              최신순
+            </button>
+            <span className="mx-2 text-tertiary">·</span>
+            <button
+              type="button"
+              onClick={() => setSort('count')}
+              className={sort === 'count' ? 'text-foreground' : 'text-tertiary hover:text-secondary'}
+            >
+              많이 남긴 순
+            </button>
+          </div>
+        ) : null}
+
+        {profile.isLoading ? <SkeletonBookshelf /> : <Bookshelf words={sortedWords} /> }
 
         {profile.hasNextPage ? (
           <button
