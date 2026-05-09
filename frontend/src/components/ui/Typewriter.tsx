@@ -4,17 +4,12 @@ import { useEffect, useState } from 'react';
 
 const HANGUL_BASE = 0xac00;
 const HANGUL_END = 0xd7a3;
-const CHO_COUNT = 19;
 const JUNG_COUNT = 21;
 const JONG_COUNT = 28;
 
 const CHO = [
   'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ',
   'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ',
-];
-const JUNG = [
-  'ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ',
-  'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ',
 ];
 
 function compose(cho: number, jung: number, jong = 0): string {
@@ -54,27 +49,12 @@ type Props = {
   speed?: number;
   /** 음절 사이 추가 멈춤 ms */
   syllablePause?: number;
-  /** 같은 키로 sessionStorage에 1회 재생 흔적을 남겨, 같은 세션 동안 재방문 시 즉시 완성 표시 */
-  onceKey?: string;
   className?: string;
 };
 
-export function Typewriter({
-  text,
-  speed = 110,
-  syllablePause = 40,
-  onceKey,
-  className,
-}: Props) {
+export function Typewriter({ text, speed = 110, syllablePause = 40, className }: Props) {
   const sequence = buildSequence(text);
-  const [index, setIndex] = useState(() => {
-    if (typeof window !== 'undefined' && onceKey) {
-      if (sessionStorage.getItem(`daner.typewriter.${onceKey}`)) {
-        return sequence.length; // 이미 재생됨 — 즉시 완성형으로
-      }
-    }
-    return 0;
-  });
+  const [index, setIndex] = useState(0);
   const done = index >= sequence.length;
 
   useEffect(() => {
@@ -89,12 +69,6 @@ export function Typewriter({
     const handle = setTimeout(() => setIndex((i) => i + 1), delay);
     return () => clearTimeout(handle);
   }, [index, sequence, speed, syllablePause, done]);
-
-  useEffect(() => {
-    if (done && onceKey && typeof window !== 'undefined') {
-      sessionStorage.setItem(`daner.typewriter.${onceKey}`, '1');
-    }
-  }, [done, onceKey]);
 
   const shown = done ? text : index === 0 ? '' : sequence[index - 1];
 

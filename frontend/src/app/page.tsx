@@ -48,7 +48,7 @@ export default function HomePage() {
       <main className="flex flex-1 flex-col items-center justify-center px-6 pb-16">
         <div className="w-full max-w-md text-center">
           <p className="font-display text-2xl font-bold text-secondary">
-            <Typewriter text="오늘의 단어는?" onceKey="home-greeting" />
+            <Typewriter text="오늘의 단어는?" />
           </p>
           <form onSubmit={onSubmit} className="mt-8">
             <input
