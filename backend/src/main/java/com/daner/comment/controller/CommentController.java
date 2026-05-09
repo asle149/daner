@@ -38,8 +38,10 @@ public class CommentController {
             @PathVariable Long id,
             @RequestParam(required = false) String cursor,
             @RequestParam(required = false) Integer limit,
-            @AuthenticationPrincipal Long currentUserId) {
-        return ApiResponse.ok(commentService.listReplies(id, cursor, limit, currentUserId));
+            @AuthenticationPrincipal Long currentUserId,
+            @RequestHeader(value = AnonymousTokenResolver.HEADER, required = false) String anonymousHeader) {
+        UUID anonymousToken = anonymousTokenResolver.resolve(anonymousHeader).orElse(null);
+        return ApiResponse.ok(commentService.listReplies(id, cursor, limit, currentUserId, anonymousToken));
     }
 
     @PostMapping("/{id}/replies")

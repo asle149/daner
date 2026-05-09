@@ -40,7 +40,7 @@ export default function MyProfilePage() {
       <Header />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 pb-16">
         <header className="mt-12 text-center">
-          <h1 className="font-display text-3xl">{user?.nickname ?? ''}</h1>
+          <h1 className="font-display text-3xl font-bold">{user?.nickname ?? ''}</h1>
           <p className="mt-2 text-sm text-secondary">
             {allWords.length}개의 단어를 모았어요
           </p>

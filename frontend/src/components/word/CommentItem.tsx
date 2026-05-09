@@ -46,7 +46,7 @@ export function CommentItem({ comment, word }: { comment: Comment; word: string 
             initialLiked={comment.isLiked}
             word={word}
           />
-          <DeleteButton commentId={comment.id} author={comment.author} word={word} />
+          <DeleteButton commentId={comment.id} isMine={comment.isMine} word={word} />
         </div>
       </div>
 

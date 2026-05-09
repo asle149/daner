@@ -53,7 +53,7 @@ async function tryRefreshAccessToken(): Promise<string | null> {
 }
 
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { attachAuth = true, attachAnonymous = false, headers, ...rest } = options;
+  const { attachAuth = true, attachAnonymous = true, headers, ...rest } = options;
   const url = path.startsWith('http') ? path : `${BASE_URL}${path}`;
 
   const buildHeaders = (token: string | null): HeadersInit => {
@@ -62,7 +62,9 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     };
     if (rest.body && !h['Content-Type']) h['Content-Type'] = 'application/json';
     if (attachAuth && token) h['Authorization'] = `Bearer ${token}`;
-    if (attachAnonymous && !token) h['X-Anonymous-Token'] = tokenStorage.getOrCreateAnonymous();
+    // 익명 토큰은 가능한 한 항상 함께 전송 — 백엔드가 비회원으로 작성한 글의
+    // 소유권 (isMine, 삭제 권한)을 확인하는 데 사용. 멤버여도 같이 보냄.
+    if (attachAnonymous) h['X-Anonymous-Token'] = tokenStorage.getOrCreateAnonymous();
     return h;
   };
 

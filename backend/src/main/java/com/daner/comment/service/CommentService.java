@@ -51,7 +51,8 @@ public class CommentService {
     private final RateLimiter rateLimiter;
 
     @Transactional(readOnly = true)
-    public CommentSliceResponse listForWord(String rawWord, String sort, String cursor, Integer limit, Long currentUserId) {
+    public CommentSliceResponse listForWord(String rawWord, String sort, String cursor, Integer limit,
+                                            Long currentUserId, UUID anonymousToken) {
         String normalized = WordNormalizer.normalize(rawWord);
         Optional<Word> word = wordRepository.findByWord(normalized);
         if (word.isEmpty()) {
@@ -63,7 +64,7 @@ public class CommentService {
         Slice<Comment> slice = "popular".equalsIgnoreCase(sort)
                 ? commentRepository.findByWordIdAndParentIsNullOrderByLikeCountDescCreatedAtDesc(word.get().getId(), pageable)
                 : commentRepository.findByWordIdAndParentIsNullOrderByCreatedAtDesc(word.get().getId(), pageable);
-        List<CommentResponse> items = mapComments(slice.getContent(), currentUserId);
+        List<CommentResponse> items = mapComments(slice.getContent(), currentUserId, anonymousToken);
         return new CommentSliceResponse(items, slice.hasNext() ? String.valueOf(page + 1) : null);
     }
 
@@ -84,7 +85,7 @@ public class CommentService {
                 .content(request.content())
                 .build());
         word.increaseCommentCount();
-        return CommentResponse.of(comment, false, 0);
+        return CommentResponse.of(comment, false, true, 0);
     }
 
     @Transactional
@@ -108,7 +109,7 @@ public class CommentService {
                 .build());
         word.increaseCommentCount();
         eventPublisher.publishEvent(new ReplyCreatedEvent(parent.getId(), reply.getId()));
-        return ReplyResponse.of(reply, false);
+        return ReplyResponse.of(reply, false, true);
     }
 
     @Transactional
@@ -163,19 +164,20 @@ public class CommentService {
     }
 
     @Transactional(readOnly = true)
-    public ReplySliceResponse listReplies(Long parentId, String cursor, Integer limit, Long currentUserId) {
+    public ReplySliceResponse listReplies(Long parentId, String cursor, Integer limit,
+                                          Long currentUserId, UUID anonymousToken) {
         int page = parseCursor(cursor);
         int size = clampLimit(limit);
         Pageable pageable = PageRequest.of(page, size);
         Slice<Comment> slice = commentRepository.findByParentIdOrderByCreatedAtAsc(parentId, pageable);
         Set<Long> liked = likedIds(currentUserId, slice.getContent());
         List<ReplyResponse> replies = slice.getContent().stream()
-                .map(c -> ReplyResponse.of(c, liked.contains(c.getId())))
+                .map(c -> ReplyResponse.of(c, liked.contains(c.getId()), isMine(c, currentUserId, anonymousToken)))
                 .toList();
         return new ReplySliceResponse(replies, slice.hasNext() ? String.valueOf(page + 1) : null);
     }
 
-    private List<CommentResponse> mapComments(List<Comment> comments, Long currentUserId) {
+    private List<CommentResponse> mapComments(List<Comment> comments, Long currentUserId, UUID anonymousToken) {
         if (comments.isEmpty()) {
             return List.of();
         }
@@ -188,8 +190,16 @@ public class CommentService {
         return comments.stream()
                 .map(c -> CommentResponse.of(c,
                         liked.contains(c.getId()),
+                        isMine(c, currentUserId, anonymousToken),
                         replyCounts.getOrDefault(c.getId(), 0L).intValue()))
                 .toList();
+    }
+
+    private boolean isMine(Comment c, Long currentUserId, UUID anonymousToken) {
+        if (c.getUser() != null) {
+            return currentUserId != null && c.getUser().getId().equals(currentUserId);
+        }
+        return anonymousToken != null && anonymousToken.equals(c.getAnonymousToken());
     }
 
     private Set<Long> likedIds(Long currentUserId, List<Comment> comments) {

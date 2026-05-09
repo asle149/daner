@@ -71,7 +71,7 @@ function SignupInner() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-6 text-center">
-        <h1 className="text-[22px]">어떻게 불러드릴까요?</h1>
+        <h1 className="font-display text-2xl font-bold">어떻게 불러드릴까요?</h1>
         <p className="text-sm text-secondary">한 번 정하면 바꾸기 어려워요.</p>
         <input
           autoFocus

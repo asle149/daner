@@ -48,11 +48,11 @@ export default function HomePage() {
         <div className="mt-24 w-full max-w-md text-center">
           {showWelcome ? <WelcomeIntro onDismiss={dismissWelcome} /> : null}
 
-          <p className="text-base text-secondary">오늘의 단어는?</p>
+          <p className="font-display text-xl font-bold text-secondary">오늘의 단어는?</p>
           <form onSubmit={onSubmit} className="mt-10">
             <input
               autoFocus
-              className="input-underline text-center text-2xl"
+              className="input-underline font-display text-center text-2xl"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               maxLength={20}
@@ -62,12 +62,12 @@ export default function HomePage() {
 
           {(home.data?.myWords.length ?? 0) > 0 ? (
             <div className="mt-12">
-              <div className="flex items-center justify-center gap-5 text-base text-secondary">
+              <div className="flex items-center justify-center gap-5 text-base text-tertiary/80">
                 {home.data!.myWords.slice(0, 3).map((w) => (
                   <a
                     key={w.id}
                     href={`/words/${encodeURIComponent(w.word)}`}
-                    className="hover:text-foreground"
+                    className="hover:text-secondary"
                   >
                     {w.word}
                   </a>
@@ -81,7 +81,7 @@ export default function HomePage() {
           {home.data?.popularWords.length ? (
             <>
               <p className="text-xs tracking-widest text-tertiary">지금 모이는</p>
-              <div className="mt-3 flex items-center justify-center gap-6 text-base text-secondary">
+              <div className="mt-3 flex items-center justify-center gap-6 font-display text-base text-secondary">
                 {home.data.popularWords.map((w) => (
                   <a
                     key={w.id}
@@ -103,15 +103,17 @@ export default function HomePage() {
 function WelcomeIntro({ onDismiss }: { onDismiss: () => void }) {
   return (
     <section className="mb-16 space-y-4 text-left text-[13px] leading-relaxed text-secondary">
-      <p className="text-center text-base text-foreground">
+      <p className="text-center font-display text-lg font-bold text-foreground">
         단어 하나로 시작되는 작은 방
       </p>
-      <p>하나의 단어가 하나의 방이 됩니다. 떠오른 단어를 입력해 보세요.</p>
       <p>
-        이미 누군가 머물렀던 단어라면 그 안에 남겨진 생각들을 만날 수 있고, 아직 아무도 찾지
-        않은 단어라면 당신의 첫 글로 새로운 방이 열려요.
+        하나의 단어가 하나의 방이 됩니다. 같은 단어를 떠올린 사람들이 서로 이야기를 주고받는
+        곳이에요. 혹은 친구끼리 우리만의 단어방을 만들 수도 있죠.
       </p>
-      <p>친구끼리 약속한 단어로 조용히 모일 수도 있어요.</p>
+      <p>
+        이미 누군가 머물렀던 단어라면 그 안에 남겨진 생각들을 만날 수 있습니다. 아직 아무도
+        찾지 않은 단어라면 당신의 첫 글로 새로운 방이 열려요.
+      </p>
       <div className="text-right">
         <button type="button" onClick={onDismiss} className="text-[11px] text-tertiary">
           닫기

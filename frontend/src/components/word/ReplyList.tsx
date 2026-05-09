@@ -32,7 +32,7 @@ export function ReplyList({ commentId, word }: { commentId: number; word: string
                 initialLiked={r.isLiked}
                 word={word}
               />
-              <DeleteButton commentId={r.id} author={r.author} word={word} />
+              <DeleteButton commentId={r.id} isMine={r.isMine} word={word} />
             </div>
           </div>
         </article>

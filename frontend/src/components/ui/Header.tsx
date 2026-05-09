@@ -1,55 +1,44 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { NotificationBell } from './NotificationBell';
-import { HelpDialog } from './HelpDialog';
 
 const OAUTH_START =
   process.env.NEXT_PUBLIC_OAUTH_START_URL ?? 'http://localhost:8080/v1/auth/google';
 
 export function Header() {
   const { isAuthenticated, loading } = useAuth();
-  const [helpOpen, setHelpOpen] = useState(false);
 
   return (
-    <>
-      <header className="flex items-center justify-between px-6 py-4 text-sm">
-        <button
-          type="button"
-          onClick={() => setHelpOpen(true)}
-          aria-label="도움말"
-          className="text-tertiary hover:text-secondary"
-        >
-          ?
-        </button>
+    <header className="flex items-center justify-between px-6 py-4 text-sm">
+      <div className="flex w-20 items-center justify-start">
+        {loading ? null : isAuthenticated ? <NotificationBell /> : null}
+      </div>
 
-        <Link href="/" className="font-display text-lg tracking-[0.2em] text-foreground">
-          DANER
-        </Link>
+      <Link
+        href="/"
+        className="font-display text-lg font-bold tracking-[0.2em] text-foreground"
+      >
+        DANER
+      </Link>
 
-        <div className="flex items-center gap-3">
-          {loading ? null : isAuthenticated ? (
-            <>
-              <NotificationBell />
-              <Link
-                href="/me"
-                aria-label="내 책장"
-                className="text-secondary hover:text-foreground"
-              >
-                <BookshelfIcon />
-              </Link>
-            </>
-          ) : (
-            <a href={OAUTH_START} className="text-secondary">
-              로그인
-            </a>
-          )}
-        </div>
-      </header>
-      <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
-    </>
+      <div className="flex w-20 items-center justify-end gap-3">
+        {loading ? null : isAuthenticated ? (
+          <Link
+            href="/me"
+            aria-label="내 책장"
+            className="text-secondary hover:text-foreground"
+          >
+            <BookshelfIcon />
+          </Link>
+        ) : (
+          <a href={OAUTH_START} className="text-secondary">
+            로그인
+          </a>
+        )}
+      </div>
+    </header>
   );
 }
 

@@ -11,10 +11,11 @@ public record ReplyResponse(
         AuthorDto author,
         int likeCount,
         boolean isLiked,
+        boolean isMine,
         LocalDateTime createdAt
 ) {
 
-    public static ReplyResponse of(Comment comment, boolean isLiked) {
+    public static ReplyResponse of(Comment comment, boolean isLiked, boolean isMine) {
         return new ReplyResponse(
                 comment.getId(),
                 comment.getParent() != null ? comment.getParent().getId() : null,
@@ -22,6 +23,7 @@ public record ReplyResponse(
                 AuthorDto.from(comment),
                 comment.getLikeCount(),
                 isLiked,
+                isMine,
                 comment.getCreatedAt());
     }
 }

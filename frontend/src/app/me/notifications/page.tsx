@@ -62,7 +62,7 @@ export default function NotificationsPage() {
     <>
       <Header />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 pb-12">
-        <h1 className="mt-12 text-center text-[22px]">받은 마음</h1>
+        <h1 className="mt-12 text-center font-display text-3xl font-bold">받은 마음</h1>
 
         {list.isLoading ? (
           <p className="mt-12 text-center text-sm text-tertiary">불러오는 중…</p>
