@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import type { Comment } from '@/types/api';
 import { AuthorLine } from './AuthorLine';
 import { ReplyList } from './ReplyList';
@@ -11,16 +10,29 @@ import { Composer } from './Composer';
 import { timeAgo } from '@/lib/util/timeAgo';
 
 export function CommentItem({ comment, word }: { comment: Comment; word: string }) {
-  const searchParams = useSearchParams();
-  // 알림에서 답글로 들어온 경우: ?p={parentCommentId} 가 붙어옴.
-  // 이 댓글이 그 부모면 답글 목록을 자동으로 펼침.
-  const expandFromQuery = searchParams.get('p') === String(comment.id);
-  const [open, setOpen] = useState(expandFromQuery);
+  const [open, setOpen] = useState(false);
   const [composeReply, setComposeReply] = useState(false);
 
+  // 알림에서 들어온 경우 답글 목록 자동 펼침.
+  // - 새 알림: ?p={parentCommentId} 가 붙음 → 정확히 매칭되는 부모만 펼침
+  // - 옛 알림(parentCommentId 없음): hash가 #comment-N 이고 그게 내가 아니면,
+  //   답글이 있는 댓글은 일단 펼쳐 둠 (그 안에 타깃이 있을 수 있음)
   useEffect(() => {
-    if (expandFromQuery) setOpen(true);
-  }, [expandFromQuery]);
+    if (typeof window === 'undefined') return;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('p') === String(comment.id)) {
+      setOpen(true);
+      return;
+    }
+    const hash = window.location.hash;
+    if (
+      hash.startsWith('#comment-') &&
+      hash !== `#comment-${comment.id}` &&
+      comment.replyCount > 0
+    ) {
+      setOpen(true);
+    }
+  }, [comment.id, comment.replyCount]);
 
   const openReplies = () => {
     setOpen(true);
