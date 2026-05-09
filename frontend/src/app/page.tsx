@@ -13,21 +13,19 @@ export default function HomePage() {
   const router = useRouter();
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [showWelcome, setShowWelcome] = useState(false);
+  const [ready, setReady] = useState(false);
 
+  // 첫 방문자는 /welcome 으로 안내. 본 페이지 렌더링은 그 이후.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!localStorage.getItem(VISITED_KEY)) {
-      setShowWelcome(true);
+      router.replace('/welcome');
+      return;
     }
-  }, []);
+    setReady(true);
+  }, [router]);
 
-  const dismissWelcome = () => {
-    localStorage.setItem(VISITED_KEY, '1');
-    setShowWelcome(false);
-  };
-
-  const home = useQuery({ queryKey: ['home'], queryFn: fetchHome });
+  const home = useQuery({ queryKey: ['home'], queryFn: fetchHome, enabled: ready });
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -41,22 +39,18 @@ export default function HomePage() {
     }
   };
 
+  if (!ready) return null;
+
   return (
     <>
       <Header />
       <main className="flex flex-1 flex-col items-center justify-center px-6 pb-16">
-        {showWelcome ? (
-          <div className="w-full max-w-md text-center">
-            <WelcomeIntro onDismiss={dismissWelcome} />
-          </div>
-        ) : null}
-
         <div className="w-full max-w-md text-center">
-          <p className="font-display text-xl font-bold text-secondary">오늘의 단어는?</p>
+          <p className="text-xl font-bold text-secondary">오늘의 단어는?</p>
           <form onSubmit={onSubmit} className="mt-10">
             <input
               autoFocus
-              className="input-underline font-display text-center text-2xl"
+              className="input-underline text-center text-2xl"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               maxLength={20}
@@ -82,7 +76,7 @@ export default function HomePage() {
         {home.data?.popularWords.length ? (
           <div className="mt-auto pt-16 w-full max-w-md text-center">
             <p className="text-xs tracking-widest text-tertiary">지금 모이는</p>
-            <div className="mt-3 flex items-center justify-center gap-6 font-display text-base text-secondary">
+            <div className="mt-3 flex items-center justify-center gap-6 text-base text-secondary">
               {home.data.popularWords.map((w) => (
                 <a
                   key={w.id}
@@ -97,28 +91,5 @@ export default function HomePage() {
         ) : null}
       </main>
     </>
-  );
-}
-
-function WelcomeIntro({ onDismiss }: { onDismiss: () => void }) {
-  return (
-    <section className="mb-16 space-y-4 text-left font-display text-[14px] leading-relaxed text-secondary">
-      <p className="text-center font-display text-lg font-bold text-foreground">
-        단어 하나로 시작되는 작은 방
-      </p>
-      <p>
-        하나의 단어가 하나의 방이 됩니다. 같은 단어를 떠올린 사람들이 서로 이야기를 주고받는
-        곳이에요. 혹은 친구끼리 우리만의 단어방을 만들 수도 있죠.
-      </p>
-      <p>
-        이미 누군가 머물렀던 단어라면 그 안에 남겨진 생각들을 만날 수 있습니다. 아직 아무도
-        찾지 않은 단어라면 당신의 첫 글로 새로운 방이 열려요.
-      </p>
-      <div className="text-right">
-        <button type="button" onClick={onDismiss} className="text-[11px] text-tertiary">
-          닫기
-        </button>
-      </div>
-    </section>
   );
 }

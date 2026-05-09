@@ -51,8 +51,10 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
-    "Pretendard", "Malgun Gothic", sans-serif;
+  /* Memoment Kkukkuk을 모든 텍스트의 기본 — 사소한 라벨까지 동일 톤 유지.
+     없는 글리프(라틴 일부, 한자 등)는 시스템 폰트로 폴백. */
+  font-family: var(--font-display), var(--font-sans), -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", sans-serif;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
