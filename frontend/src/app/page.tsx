@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
@@ -27,6 +27,15 @@ export default function HomePage() {
   }, [router]);
 
   const home = useQuery({ queryKey: ['home'], queryFn: fetchHome, enabled: ready });
+
+  // 평소엔 안내 안 보이고, normalize 후 10자 초과일 때만 안내 메시지 노출
+  const tooLong = useMemo(() => {
+    try {
+      return [...normalizeForRouting(value)].length > 10;
+    } catch {
+      return false;
+    }
+  }, [value]);
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -75,7 +84,7 @@ export default function HomePage() {
             />
           </form>
           <p className="mt-2 min-h-5 font-display text-sm text-accent">
-            {error ?? <span className="text-tertiary">10자 이내로 써주세요</span>}
+            {error ?? (tooLong ? '10자 이내로 써주세요' : '')}
           </p>
 
           {(home.data?.myWords.length ?? 0) > 0 ? (

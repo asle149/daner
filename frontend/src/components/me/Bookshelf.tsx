@@ -10,6 +10,8 @@ const MAX_WIDTH = MIN_WIDTH * MAX_RATIO;
 const BOOK_HEIGHT = 112;
 const PER_SHELF = 10;
 const SCALE_THRESHOLD = 20;
+// 두 컬럼이 들어갈 수 있는 최소 폭. 자간이 좁아도 글자 두 줄은 들어가야 함.
+const TWO_COL_MIN = 28;
 
 // 책 두께: 1개면 기본, 그 이상은 비율로 두꺼워짐 (최대 5배).
 // max가 20 이하면 20을 기준으로 환산해서 절대 크기를 유지하고,
@@ -33,9 +35,9 @@ function Book({
   myCommentCount: number;
 }) {
   const chunks = chunkWord(word);
-  // 두 줄 이상이면 책 한 칸이 두 컬럼을 담아야 하니 가로 폭을 살짝 키움
-  const lineCount = chunks.length;
-  const renderWidth = Math.max(width, lineCount * MIN_WIDTH);
+  // 두 줄 이상이면 두 컬럼이 들어갈 최소 폭만 보장. 그 이상은 댓글 수 비율(width)에 맡김.
+  // 이러면 댓글 많은 한 줄 단어가 댓글 적은 두 줄 단어보다 항상 두꺼움.
+  const renderWidth = chunks.length > 1 ? Math.max(width, TWO_COL_MIN) : width;
   return (
     <Link
       href={href}
@@ -43,9 +45,7 @@ function Book({
       className="flex items-start justify-center rounded-t-md border border-hairline-strong bg-hairline/40 text-foreground transition-colors hover:bg-hairline/70"
       title={`${word} · ${myCommentCount}개의 글`}
     >
-      <span
-        className="flex flex-row-reverse gap-px px-1 pt-2 font-display text-[13px] -tracking-[0.02em]"
-      >
+      <span className="flex flex-row-reverse gap-0 px-0.5 pt-2 font-display text-[12px] leading-[1.05] -tracking-[0.06em]">
         {chunks.map((chunk, i) => (
           <span
             key={i}

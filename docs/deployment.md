@@ -1,26 +1,27 @@
 # 다너 배포 가이드 (daner.kr)
 
-> 도메인: `daner.kr` (구매 완료)
+> 도메인: `daner.kr` (구매 완료, 등록기관: dothome.co.kr)
+> 현재 운영 조합: **Vercel + Oracle Cloud (Always Free) + Neon**
 
-## 무료 vs 유료
+## 무료 옵션 비교
 
 | 조합 | 비용 | 특징 |
 |---|---|---|
-| **Vercel + Render + Neon** | **$0/월 영구** | 백엔드가 15분 무활동 후 잠들어 첫 요청에 ~30초 cold start. 그 외 100% 무료 |
-| Vercel + Fly.io + Neon | $0~$3/월 | Fly 무료 한도 좁음, 트래픽 늘면 청구 |
-| Vercel + Railway + Railway Postgres | **$5 크레딧 후 유료** | Railway는 무료 아님. 한 달 $5 크레딧만, 이후 사용량 청구 |
+| **Vercel + Oracle Cloud + Neon** ✅ 현재 | **$0/월 영구** | 직접 셋업 필요. cold start 없음. ARM 4코어/24GB 또는 AMD 1코어/1GB |
+| Vercel + Render free + Neon | $0/월 | 셋업 쉬움. 그러나 15분 무활동 후 ~30초 cold start |
+| Vercel + Fly.io 256MB | ~$2/월 | always-on, 셋업 깔끔 |
 
-**돈 안 쓰려면 1번 (Vercel + Render + Neon)**. 이 가이드는 그 기준.
+→ "진짜 0원" 이면서 cold start 없는 게 Oracle. 단점은 셋업 시간(1~2시간) 과 카드 검증.
 
 ---
 
 ## 0. 사전 준비물
 
-- GitHub 리포: `https://github.com/asle149/daner` (이미 푸시됨)
-- 도메인 등록기관 콘솔 접근 (네임서버/DNS 변경 가능해야 함)
+- GitHub 리포: `https://github.com/asle149/daner`
+- 도메인 등록기관 콘솔 접근 (DNS 레코드 변경 가능해야 함)
 - Google Cloud Console 접근 (OAuth 클라이언트 수정용)
 - Vercel 계정 (https://vercel.com)
-- Render 계정 (https://render.com)
+- **Oracle Cloud 계정** (https://cloud.oracle.com) — 신용카드 검증 필요
 - Neon 계정 (https://neon.tech)
 
 ---
@@ -28,74 +29,191 @@
 ## 1. Neon — 무료 PostgreSQL
 
 1. https://neon.tech → Sign up (GitHub 가능) → 무료 플랜
-2. New Project → Region: **Asia Pacific (Singapore)** (한국에서 가장 가까움) → Database name: `daner`
-3. 생성되면 **Connection Details** 화면에서 connection string 복사:
+2. New Project → Region: **Asia Pacific (Singapore)** → Database name: `daner`
+3. **Connection Details** 화면에서 connection string 복사:
    - 형태: `postgresql://username:password@ep-xxx.ap-southeast-1.aws.neon.tech/daner?sslmode=require`
-4. 메모해둠 (Render에 넣을 거)
 
-> **무료 한도**: 3GB 저장, 한 프로젝트, 사용 안 하면 자동 슬립(다음 쿼리 시 자동 깨어남)
-
----
-
-## 2. Render — 무료 백엔드
-
-### 2-1. 프로젝트 생성
-
-1. https://render.com → New + → **Web Service**
-2. GitHub `asle149/daner` 연결
-3. 설정:
-   - **Name**: `daner-api`
-   - **Region**: Singapore
-   - **Branch**: `main`
-   - **Root Directory**: `backend` ← 모노레포 핵심
-   - **Runtime**: **Docker** (Dockerfile 자동 감지) — 우리는 `backend/Dockerfile` 추가했음
-   - **Plan**: **Free**
-
-### 2-2. 환경변수 (Environment)
-
-Render → 서비스 → Environment 탭. 아래 키 등록:
-
-| 키 | 값 |
-|---|---|
-| `SPRING_PROFILES_ACTIVE` | `prod` |
-| `DB_URL` | `jdbc:postgresql://ep-xxx.ap-southeast-1.aws.neon.tech/daner?sslmode=require` ← Neon URL 앞에 `jdbc:` 붙이고 `?sslmode=require` 유지 |
-| `DB_USERNAME` | (Neon connection의 user 부분) |
-| `DB_PASSWORD` | (Neon connection의 password 부분) |
-| `JWT_SECRET` | `openssl rand -base64 48` 결과값 |
-| `GOOGLE_CLIENT_ID` | Google Console에서 발급 |
-| `GOOGLE_CLIENT_SECRET` | Google Console에서 발급 |
-| `GOOGLE_REDIRECT_URI` | `https://api.daner.kr/v1/auth/google/callback` |
-| `CORS_ALLOWED_ORIGINS` | `https://daner.kr,https://www.daner.kr` |
-| `FRONTEND_URL` | `https://daner.kr` |
-
-### 2-3. 커스텀 도메인
-
-1. Render → 서비스 → **Settings** → **Custom Domain** → `api.daner.kr` 추가
-2. 표시되는 CNAME 타깃 메모 (예: `daner-api.onrender.com`)
-3. 도메인 등록기관 DNS:
-   - **Type**: CNAME, **Host**: `api`, **Value**: `daner-api.onrender.com`
-4. Render가 인증서 자동 발급 (5~15분)
-
-### 2-4. 무료 플랜의 제약
-
-- **15분 무요청 시 잠듦**, 다음 요청에 cold start (~30초)
-- 첫 사용자가 접속하면 살짝 느릴 수 있음
-- 서비스가 깨어나면 빠름
-- 트래픽 늘면 Starter ($7/월)로 업그레이드
+> 무료 한도: 3GB 저장, 사용 안 하면 자동 슬립(다음 쿼리 시 자동 깨어남, 백엔드 입장에선 거의 무체감)
 
 ---
 
-## 3. Vercel — 프론트엔드
+## 2. Oracle Cloud — 무료 백엔드 인스턴스
 
-### 3-1. 프로젝트 생성
+### 2-1. 가입 주의사항
+
+- **Visa / Mastercard 신용카드** 권장 (체크카드는 거절 잦음)
+- $1 임시 결제 후 환불됨
+- **"Always Free"** 자원만 쓰면 평생 청구 0원. 30일/$300 평가판 끝나도 자동 다운그레이드되어 유료 자원만 정지됨
+- "Upgrade and Pay As You Go" 버튼은 **절대 누르지 말 것**
+- **Home Region 한 번 정하면 변경 불가** — `Korea Central (Seoul)` 또는 `Korea North (Chuncheon)` 권장
+
+### 2-2. 인스턴스 생성
+
+1. **Compute → Instances → Create Instance**
+2. 이름: `daner-api` (자유)
+3. Image and Shape:
+   - **Image**: Ubuntu 22.04 (`Canonical-Ubuntu-22.04-...`) — Docker 자료 풍부
+   - **Shape**: `VM.Standard.A1.Flex` 4 OCPU / 24GB (Always Free) ← ARM, 가장 좋음
+   - 만약 "Out of host capacity" 에러: `VM.Standard.E2.1.Micro` (AMD, 1 OCPU/1GB) 도 Always Free
+4. SSH Keys:
+   - PowerShell 에서 `ssh-keygen -t ed25519 -f $HOME\.ssh\daner_oracle -N '""'`
+   - `daner_oracle.pub` 내용을 **Paste public keys** 에 붙여넣기
+   - 또는 콘솔에서 "Generate a key pair for me" → `.key` 파일 다운로드 (잃어버리면 영영 못 들어감)
+5. Networking:
+   - **Create new virtual cloud network** + **Create new public subnet**
+   - **"Assign a public IPv4 address"** 반드시 체크
+6. Boot volume: 50GB 기본
+7. **Create** → 5~10분 후 `RUNNING` + Public IP 표시
+
+### 2-3. Security List 에 80/443 추가 (필수)
+
+1. **Networking → Virtual Cloud Networks → daner-vcn**
+2. **Security Lists → Default Security List for daner-vcn**
+3. **Ingress Rules → Add Ingress Rules** → 두 줄:
+
+| Source CIDR | IP Protocol | Destination Port |
+|---|---|---|
+| `0.0.0.0/0` | TCP | `80` |
+| `0.0.0.0/0` | TCP | `443` |
+
+### 2-4. SSH 접속 + 서버 초기 셋업
+
+PowerShell 에서:
+```powershell
+icacls $HOME\.ssh\daner_oracle /inheritance:r /grant:r "${env:USERNAME}:R"
+ssh -i $HOME\.ssh\daner_oracle ubuntu@<PUBLIC_IP>
+```
+
+서버 안에서 (한 번에):
+```bash
+# 1) 시스템 업데이트
+sudo apt update && sudo apt upgrade -y
+
+# 2) swap 2GB (1GB RAM 인스턴스 안전망, 4코어/24GB 면 생략 가능)
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# 3) ufw 22/80/443
+sudo ufw allow 22/tcp && sudo ufw allow 80/tcp && sudo ufw allow 443/tcp
+sudo ufw --force enable
+
+# 4) Oracle Ubuntu 이미지의 iptables INPUT 에 REJECT 가 깔려 있어
+#    ufw 만 열어도 80/443 이 막힘. ACCEPT 를 맨 위에 끼워 넣음.
+sudo iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
+sudo iptables -I INPUT 1 -p tcp --dport 443 -j ACCEPT
+sudo apt install -y iptables-persistent
+sudo netfilter-persistent save
+
+# 5) Docker
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+exit   # 그룹 적용 위해 SSH 재접속 필요
+```
+
+재접속 후 `docker run --rm hello-world` 으로 확인.
+
+### 2-5. 백엔드 코드 + 환경변수 + 컨테이너
+
+```bash
+sudo apt install -y git
+cd ~ && git clone https://github.com/asle149/daner.git
+cd daner/backend
+nano .env       # 아래 키들 채우기
+```
+
+`.env` 내용 (값은 본인 것):
+```env
+SPRING_PROFILES_ACTIVE=prod
+DB_URL=jdbc:postgresql://ep-xxx.ap-southeast-1.aws.neon.tech/daner?sslmode=require
+DB_USERNAME=...
+DB_PASSWORD=...
+JWT_SECRET=...
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=https://api.daner.kr/v1/auth/google/callback
+CORS_ALLOWED_ORIGINS=https://daner.kr,https://www.daner.kr
+FRONTEND_URL=https://daner.kr
+```
+
+```bash
+echo ".env" >> .gitignore
+
+# 빌드 (1GB RAM 이면 5~15분, ARM 24GB 면 1~2분)
+docker build -t daner-api .
+
+# 실행 — 재부팅에도 자동 시작
+docker run -d \
+  --name daner-api \
+  --restart unless-stopped \
+  -p 8080:8080 \
+  --env-file .env \
+  -e JAVA_TOOL_OPTIONS="-Xmx500m" \
+  daner-api
+
+# 헬스 확인
+docker logs --tail 30 daner-api          # "Started DanerApplication" 보일 때까지
+curl http://localhost:8080/v1/actuator/health   # {"status":"UP"}
+```
+
+### 2-6. Caddy — HTTPS 자동 발급
+
+```bash
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update && sudo apt install -y caddy
+```
+
+설정 (`/etc/caddy/Caddyfile`):
+```caddy
+api.daner.kr {
+    reverse_proxy localhost:8080
+}
+```
+
+```bash
+sudo systemctl restart caddy
+sudo journalctl -u caddy -f   # certificate obtained successfully 보이면 Ctrl+C
+```
+
+> Caddy 가 자동으로 Let's Encrypt 에 ACME challenge 시도. DNS 가 인스턴스 IP 를 가리키고 80/443 이 뚫려 있어야 발급 성공. 안 되면 인증서 발급 실패 로그가 찍히고 자동 재시도.
+
+---
+
+## 3. DNS — 도메인 등록기관 콘솔
+
+`api.daner.kr` 가 인스턴스를 가리키게:
+
+| Type | Host/Name | Value | TTL |
+|---|---|---|---|
+| **A** | `api` | `<인스턴스 PUBLIC IP>` | 3600 |
+
+기존 다른 백엔드(Render 등) CNAME 이 있다면 삭제.
+
+`apex` (`daner.kr`) 와 `www` 는 Vercel 쪽:
+- `daner.kr` (apex): A 레코드 → `76.76.21.21`
+- `www.daner.kr`: CNAME → `cname.vercel-dns.com`
+
+전파 5~30분.
+
+서버에서 확인:
+```bash
+dig +short api.daner.kr   # 인스턴스 IP 떠야 함
+```
+
+---
+
+## 4. Vercel — 프론트엔드
+
+### 4-1. 프로젝트 생성
 
 1. https://vercel.com → Add New → **Project** → GitHub `asle149/daner` import
 2. Configure Project:
    - **Root Directory**: `frontend` ← 핵심
    - **Framework Preset**: Next.js (자동)
-   - 나머지 기본
 
-### 3-2. 환경변수
+### 4-2. 환경변수
 
 | 키 | 값 |
 |---|---|
@@ -103,99 +221,95 @@ Render → 서비스 → Environment 탭. 아래 키 등록:
 | `NEXT_PUBLIC_OAUTH_START_URL` | `https://api.daner.kr/v1/auth/google` |
 | `NEXT_PUBLIC_SITE_URL` | `https://daner.kr` |
 
-### 3-3. 커스텀 도메인
+### 4-3. 커스텀 도메인
 
 1. Vercel → 프로젝트 → Settings → **Domains** → `daner.kr` + `www.daner.kr` 추가
-2. Vercel이 보여주는 DNS:
-   - `daner.kr` (apex): **A** 레코드 → `76.76.21.21`
-   - `www.daner.kr`: **CNAME** → `cname.vercel-dns.com`
-3. 도메인 등록기관 DNS에 등록
-4. 5~30분 후 인증서 자동 발급
+2. DNS 가 위 3 단계대로 잡혀 있으면 자동 인증
 
 ---
 
-## 4. Google OAuth Console
+## 5. Google OAuth Console
 
 1. https://console.cloud.google.com → APIs & Services → Credentials
-2. 기존 OAuth 2.0 클라이언트 ID 클릭 → **Authorized redirect URIs**에 추가:
-   - `https://api.daner.kr/v1/auth/google/callback`
-3. **OAuth 동의 화면** → External 사용자 허용. (검토 신청 안 해도 테스트 사용자에 등록한 계정은 로그인됨)
+2. OAuth 2.0 클라이언트 → **Authorized redirect URIs** 에 `https://api.daner.kr/v1/auth/google/callback` 등록
+3. **OAuth 동의 화면** → External 사용자 허용 (검토 신청 안 해도 테스트 사용자 등록한 계정은 로그인됨)
 
 ---
 
-## 5. 동작 확인
+## 6. 동작 확인
 
-- `https://daner.kr` → 첫 방문이면 `/welcome` → "시작하기!" → `/`
-- `https://api.daner.kr/v1/actuator/health` → `{"status":"UP"}` (cold start면 첫 요청 30초 대기)
-- 헤더 우측 로그인 → 구글 동의 → 닉네임 입력 → 가입 완료
+- `https://api.daner.kr/v1/actuator/health` → `{"status":"UP"}`
+- `https://daner.kr` → 첫 방문이면 `/welcome` → "시작하기" → `/`
+- 로그인 → 구글 동의 → 닉네임 입력 → 가입 완료
+- 단어 작성 → 댓글 → 답글 → 알림
 
 ---
 
-## 6. 예상 월 비용 (free 조합)
+## 7. 운영 — 코드 바뀔 때 재배포
+
+```bash
+ssh -i $HOME\.ssh\daner_oracle ubuntu@<IP>
+
+cd ~/daner && git pull
+cd backend && docker build -t daner-api .
+docker rm -f daner-api
+docker run -d \
+  --name daner-api --restart unless-stopped \
+  -p 8080:8080 --env-file .env \
+  -e JAVA_TOOL_OPTIONS="-Xmx500m" \
+  daner-api
+
+docker logs --tail 30 daner-api   # "Started" 메시지 확인
+```
+
+Caddy 인증서는 자동 갱신(60일마다). 신경 안 써도 됨.
+
+---
+
+## 8. 트러블슈팅
+
+| 증상 | 원인 / 해결 |
+|---|---|
+| Oracle 인스턴스 생성 시 "Out of host capacity" | ARM A1 자리 부족. AMD E2.1.Micro 로 우회하거나 며칠 재시도 |
+| SSH "permissions too open" | PowerShell 에서 `icacls $key /inheritance:r /grant:r "${env:USERNAME}:R"` |
+| `dig api.daner.kr` 안 잡힘 | DNS 전파 대기 (보통 5분, 최대 24시간) |
+| Caddy `certificate obtained` 안 뜸 | 80번이 외부에서 안 보이는 것. Security List 80/443 + iptables INPUT 1 위치 확인 |
+| `https://api.daner.kr` 가 502 | 백엔드 컨테이너 부팅 중 또는 죽음. `docker logs --tail 50 daner-api` |
+| Spring Boot 부팅 시 OOM | swap 살아있는지 `free -h`. `JAVA_TOOL_OPTIONS=-Xmx500m` 더 줄이기 |
+| `Connection refused` to Neon | `DB_URL` 끝에 `?sslmode=require`, 앞에 `jdbc:` 붙었는지 |
+| 401 INVALID_TOKEN on first login | Google Console redirect URI 에 `https://api.daner.kr/v1/auth/google/callback` 등록 |
+| CORS 차단 | `CORS_ALLOWED_ORIGINS` 에 정확히 `https://daner.kr` (콤마 구분, 스페이스 X) |
+| 프론트가 백엔드 못 부름 | Vercel `NEXT_PUBLIC_*` 변경 후 Redeploy 필요 (build-time 박힘) |
+
+---
+
+## 9. 비용 (현재 조합)
 
 | 서비스 | 비용 |
 |---|---|
-| 도메인 daner.kr | (이미 결제) ~연 1만~2만원 |
+| daner.kr 도메인 | 연 ~1만원 |
 | Vercel hobby | $0 |
-| Render free | $0 (cold start 제약) |
-| Neon free | $0 (3GB 저장 한도) |
+| Oracle Cloud Always Free | $0 (영구) |
+| Neon free | $0 (3GB 한도) |
 | Google OAuth | $0 |
 | **월 총합** | **$0** |
 
-트래픽이 늘어 free 한도 초과하면:
-- Render Starter $7/월 (cold start 없음)
-- Neon Pro 단계는 $19~/월 (지금 단계엔 불필요)
+> 주의: Oracle 콘솔에서 "Upgrade and Pay As You Go" 누르면 그때부터 카드 청구 시작. 무시하면 영구 무료.
 
 ---
 
-## 7. 트러블슈팅
+## 10. 보안 체크 (배포 전 1회)
 
-### Railway 빌드 실패 (현재 사용자가 겪는 문제)
-
-**증상**: Railway에서 "Failed to build an image" — Build > Build image 단계에서 멈춤
-
-**원인 후보**:
-1. **Root Directory 미설정** — Railway가 리포 루트에서 Gradle을 찾으려 함. `backend`로 지정 필요
-2. **Nixpacks가 Java 버전 못 잡음** — Spring Boot 3.x는 Java 17 필요. Nixpacks 기본은 가끔 다름
-3. **메모리 부족** — Gradle 빌드는 메모리 많이 먹음
-
-**해결**: Railway 쓸 거면 우리가 추가한 `backend/Dockerfile`을 인식시키기. Railway 대시보드에서:
-- Settings → **Builder** → **Dockerfile** 선택
-- **Dockerfile Path**: `backend/Dockerfile`
-- **Build Context**: `backend`
-
-이러면 Nixpacks 우회하고 우리 Dockerfile로 직접 빌드. 안정적.
-
-**또는 Render로 옮기기 권장** (이 가이드 본문 — 진짜 무료에 더 안정적).
-
-### 일반 트러블
-
-| 증상 | 원인·확인 |
-|---|---|
-| `daner.kr` DNS 안 풀림 | 도메인 등록기관 DNS 전파 대기 (보통 5분, 최대 24시간) |
-| Vercel `404` | Root Directory `frontend` 설정 확인 |
-| 백엔드 `Connection refused` to DB | DB_URL 형식 확인 (`jdbc:postgresql://...`로 시작, `?sslmode=require` 포함) |
-| 401 INVALID_TOKEN on first login | OAuth redirect URI Google Console에 `https://api.daner.kr/v1/auth/google/callback` 등록 확인 |
-| CORS 막힘 | `CORS_ALLOWED_ORIGINS`에 `https://daner.kr` 포함 확인 (콤마 구분, 스페이스 X) |
-| Render 첫 요청 30초 | free 플랜 cold start. 정상. Starter 플랜이면 사라짐 |
-| 프론트가 백엔드 못 부름 | Vercel `NEXT_PUBLIC_API_BASE_URL`이 `https://api.daner.kr/v1` (끝 `/v1`까지) 확인. `NEXT_PUBLIC_*`는 빌드 타임에 박히므로 변경 후 재배포 필요 |
-| Neon DB 연결 안 됨 | connection string 끝의 `?sslmode=require` 제거하지 말 것. `jdbc:` 접두 필수 |
+- [ ] `JWT_SECRET` 충분히 긴 랜덤값 (`openssl rand -base64 48`)
+- [ ] `application-local.yml` 깃에 안 올라감
+- [ ] `application-prod.yml` 평문 시크릿 없음 (모두 `${ENV_VAR}` 참조)
+- [ ] `.env` 가 `.gitignore` 에 포함
+- [ ] Google OAuth secret 깃 히스토리에 없음
+- [ ] CORS 가 `*` 아닌 실 도메인 only
+- [ ] HTTPS 만 허용 (Caddy 가 80→443 자동 리다이렉트)
 
 ---
 
-## 8. 보안 체크 (배포 전 1회)
+## 11. 옛 배포 옵션 (참고)
 
-- [ ] `JWT_SECRET` 충분히 긴 랜덤값 (32바이트+)
-- [ ] `application-local.yml`은 깃에 안 올라감 (확인됨)
-- [ ] `application-prod.yml`에 평문 시크릿 없음 (모두 `${ENV_VAR}` 참조)
-- [ ] Google OAuth secret 깃 히스토리에 없음 (있으면 Reset Secret)
-- [ ] CORS는 `*` 아님 (실 도메인만)
-- [ ] HTTPS만 허용 (Vercel/Render 둘 다 자동)
-
----
-
-## 9. 향후
-
-- 트래픽 늘면 Render Starter $7/월 (cold start 제거)
-- DB 백업: Neon은 free에서도 PITR 7일 유지
-- 모니터링: Render/Vercel 기본 메트릭으로 시작, 부하 늘면 Sentry 추가
+이전엔 Render free 로 운영했음. 15분 cold start 때문에 Oracle 로 이주. Render 셋업이 필요하면 이전 커밋 히스토리(`v0.2.6` 근처) 참고.
