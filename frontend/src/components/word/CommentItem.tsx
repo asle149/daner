@@ -9,16 +9,20 @@ import { DeleteButton } from './DeleteButton';
 import { Composer } from './Composer';
 import { timeAgo } from '@/lib/util/timeAgo';
 
+const REPLIES_OPEN_PREFIX = 'daner.replies-open.';
+
 export function CommentItem({ comment, word }: { comment: Comment; word: string }) {
   const [open, setOpen] = useState(false);
   const [composeReply, setComposeReply] = useState(false);
 
-  // 알림에서 들어온 경우 답글 목록 자동 펼침.
-  // - 새 알림: ?p={parentCommentId} 가 붙음 → 정확히 매칭되는 부모만 펼침
-  // - 옛 알림(parentCommentId 없음): hash가 #comment-N 이고 그게 내가 아니면,
-  //   답글이 있는 댓글은 일단 펼쳐 둠 (그 안에 타깃이 있을 수 있음)
+  // 펼침 상태는 localStorage 에 "펼친 것만" 저장 (접은 건 키 제거).
+  // 알림으로 들어오면 hash/?p= 로 자동 펼침은 그대로 유지.
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (localStorage.getItem(`${REPLIES_OPEN_PREFIX}${comment.id}`) === '1') {
+      setOpen(true);
+      return;
+    }
     const sp = new URLSearchParams(window.location.search);
     if (sp.get('p') === String(comment.id)) {
       setOpen(true);
@@ -34,8 +38,16 @@ export function CommentItem({ comment, word }: { comment: Comment; word: string 
     }
   }, [comment.id, comment.replyCount]);
 
+  const updateOpen = (next: boolean) => {
+    setOpen(next);
+    if (typeof window === 'undefined') return;
+    const key = `${REPLIES_OPEN_PREFIX}${comment.id}`;
+    if (next) localStorage.setItem(key, '1');
+    else localStorage.removeItem(key);
+  };
+
   const openReplies = () => {
-    setOpen(true);
+    updateOpen(true);
     setComposeReply(true);
   };
 
@@ -55,7 +67,7 @@ export function CommentItem({ comment, word }: { comment: Comment; word: string 
           {comment.replyCount > 0 ? (
             <button
               type="button"
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => updateOpen(!open)}
               className="font-display text-[13px] text-tertiary"
             >
               {open ? '접기' : `+${comment.replyCount}`}

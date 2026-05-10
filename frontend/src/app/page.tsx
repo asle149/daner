@@ -34,6 +34,10 @@ export default function HomePage() {
     try {
       const word = normalizeForRouting(value);
       if (!word) return;
+      if ([...word].length > 10) {
+        setError('10자 이내로 써주세요.');
+        return;
+      }
       router.push(`/words/${encodeURIComponent(word)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : '잘못된 단어예요.');
@@ -55,7 +59,10 @@ export default function HomePage() {
               autoFocus
               className="font-display w-full bg-transparent text-center text-2xl outline-none"
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={(e) => {
+                setValue(e.target.value);
+                if (error) setError(null);
+              }}
               maxLength={20}
             />
             <Image
@@ -67,7 +74,9 @@ export default function HomePage() {
               className="underline-image"
             />
           </form>
-          <p className="mt-2 min-h-5 font-display text-sm text-accent">{error}</p>
+          <p className="mt-2 min-h-5 font-display text-sm text-accent">
+            {error ?? <span className="text-tertiary">10자 이내로 써주세요</span>}
+          </p>
 
           {(home.data?.myWords.length ?? 0) > 0 ? (
             <div className="mt-12 flex items-center justify-center gap-5 font-display text-base text-tertiary/80">
@@ -83,23 +92,6 @@ export default function HomePage() {
             </div>
           ) : null}
         </div>
-
-        {home.data?.popularWords.length ? (
-          <div className="mt-auto pt-16 w-full max-w-md text-center">
-            <p className="font-display text-xs tracking-widest text-tertiary">지금 모이는</p>
-            <div className="mt-3 flex items-center justify-center gap-6 font-display text-base text-secondary">
-              {home.data.popularWords.map((w) => (
-                <a
-                  key={w.id}
-                  href={`/words/${encodeURIComponent(w.word)}`}
-                  className="hover:text-foreground"
-                >
-                  {w.word}
-                </a>
-              ))}
-            </div>
-          </div>
-        ) : null}
       </main>
     </>
   );

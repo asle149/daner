@@ -6,6 +6,7 @@ import { Header } from '@/components/ui/Header';
 import { CommentList } from '@/components/word/CommentList';
 import { Composer } from '@/components/word/Composer';
 import { fetchWordRoom } from '@/lib/api/endpoints';
+import { chunkWord } from '@/lib/util/chunkWord';
 
 export default function WordRoomPage({ params }: { params: Promise<{ word: string }> }) {
   const { word: encodedWord } = use(params);
@@ -44,7 +45,13 @@ export default function WordRoomPage({ params }: { params: Promise<{ word: strin
       <Header />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 pb-32">
         <header className="mt-12 text-center">
-          <h1 className="font-display text-5xl font-bold tracking-wide">{word}</h1>
+          <h1 className="font-display text-4xl font-bold leading-tight -tracking-[0.01em]">
+            {chunkWord(word).map((chunk, i) => (
+              <span key={i} className="block">
+                {chunk}
+              </span>
+            ))}
+          </h1>
           {room.data?.exists ? (
             <p className="mt-2 font-display text-sm text-secondary">
               {room.data.commentCount}개의 이야기

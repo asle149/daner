@@ -50,10 +50,10 @@ export default function NotificationsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications.length]);
 
-  // 답글은 개별 알림, 같은 댓글의 좋아요는 합쳐서 한 줄로
+  // 답글은 개별 알림, 좋아요는 같은 댓글 + 연속된 것만 합쳐서 한 줄로.
+  // (사이에 다른 단어/댓글 알림이 끼어 있으면 시간 순서가 흐트러지므로 별개로 둠)
   const buckets: Bucket[] = useMemo(() => {
     const out: Bucket[] = [];
-    const likeBucketByComment = new Map<number, Bucket & { kind: 'like' }>();
     for (const n of notifications) {
       if (n.type === 'reply') {
         out.push({
@@ -66,38 +66,39 @@ export default function NotificationsPage() {
         });
         continue;
       }
-      const existing = likeBucketByComment.get(n.commentId);
-      if (existing) {
-        existing.ids.push(n.id);
-        existing.count += 1;
-        // 가장 최신을 대표로
-        if (n.createdAt > existing.rep.createdAt) existing.rep = n;
-      } else {
-        const b: Bucket & { kind: 'like' } = {
-          kind: 'like',
-          key: `l-${n.commentId}`,
-          word: n.word,
-          commentId: n.commentId,
-          rep: n,
-          ids: [n.id],
-          count: 1,
-        };
-        likeBucketByComment.set(n.commentId, b);
-        out.push(b);
+      const last = out[out.length - 1];
+      if (last && last.kind === 'like' && last.commentId === n.commentId) {
+        last.ids.push(n.id);
+        last.count += 1;
+        if (n.createdAt > last.rep.createdAt) last.rep = n;
+        continue;
       }
+      out.push({
+        kind: 'like',
+        key: `l-${n.id}`,
+        word: n.word,
+        commentId: n.commentId,
+        rep: n,
+        ids: [n.id],
+        count: 1,
+      });
     }
     return out;
   }, [notifications]);
 
-  // 단어로 그룹
+  // 단어로 그룹 — 연속된 같은 단어만 묶어서 시간 순서를 보존.
+  // (a b a 로 도착한 알림은 a / b / a 세 묶음 그대로 보여 줌)
   const groups = useMemo(() => {
-    const m = new Map<string, Bucket[]>();
+    const out: Array<[string, Bucket[]]> = [];
     for (const b of buckets) {
-      const arr = m.get(b.word) ?? [];
-      arr.push(b);
-      m.set(b.word, arr);
+      const last = out[out.length - 1];
+      if (last && last[0] === b.word) {
+        last[1].push(b);
+      } else {
+        out.push([b.word, [b]]);
+      }
     }
-    return Array.from(m.entries());
+    return out;
   }, [buckets]);
 
   return (
@@ -114,8 +115,8 @@ export default function NotificationsPage() {
           </p>
         ) : (
           <div className="mt-10 space-y-8">
-            {groups.map(([word, items]) => (
-              <section key={word}>
+            {groups.map(([word, items], gi) => (
+              <section key={`${word}-${gi}-${items[0]?.key ?? ''}`}>
                 <Link
                   href={`/words/${encodeURIComponent(word)}`}
                   className="font-display text-[12px] tracking-widest text-tertiary"
