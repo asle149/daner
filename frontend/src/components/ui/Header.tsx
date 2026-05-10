@@ -11,7 +11,7 @@ export function Header() {
   const { isAuthenticated, loading } = useAuth();
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between bg-background/90 px-6 py-4 text-sm backdrop-blur">
+    <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-4 text-sm backdrop-blur-sm">
       <div className="flex w-20 items-center justify-start">
         {loading ? null : isAuthenticated ? <NotificationBell /> : null}
       </div>
