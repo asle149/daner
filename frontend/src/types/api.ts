@@ -20,6 +20,7 @@ export type User = {
   id: number;
   nickname: string;
   profileImageUrl: string | null;
+  isAdmin?: boolean;
 };
 
 export type WordRoom = {

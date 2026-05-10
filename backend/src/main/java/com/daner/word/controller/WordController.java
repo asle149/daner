@@ -7,11 +7,13 @@ import com.daner.comment.dto.CommentSliceResponse;
 import com.daner.comment.service.CommentService;
 import com.daner.common.response.ApiResponse;
 import com.daner.word.dto.WordRoomResponse;
+import com.daner.word.dto.WordWipeResponse;
 import com.daner.word.service.WordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,5 +61,14 @@ public class WordController {
             @RequestHeader(value = AnonymousTokenResolver.HEADER, required = false) String anonymousHeader) {
         UUID anonymousToken = anonymousTokenResolver.resolve(anonymousHeader).orElse(null);
         return ApiResponse.ok(commentService.createTopLevel(word, request, currentUserId, anonymousToken));
+    }
+
+    /** 관리자 전용 — 단어 방의 모든 댓글/답글 일괄 삭제 */
+    @DeleteMapping("/{word}/comments")
+    public ApiResponse<WordWipeResponse> wipeComments(
+            @PathVariable String word,
+            @AuthenticationPrincipal Long currentUserId) {
+        int removed = commentService.wipeWordRoom(word, currentUserId);
+        return ApiResponse.ok(new WordWipeResponse(word, removed));
     }
 }

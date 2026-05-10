@@ -51,20 +51,22 @@ class JwtTokenProviderTest {
         @Test
         void signup_token_round_trips_oauth_identity_and_picture() {
             String token = provider.createSignupToken("google", "google-uid-1",
-                    "https://lh3.googleusercontent.com/photo");
+                    "user@example.com", "https://lh3.googleusercontent.com/photo");
 
             SignupTokenPayload payload = provider.parseSignupToken(token);
 
             assertThat(payload.oauthProvider()).isEqualTo("google");
             assertThat(payload.oauthId()).isEqualTo("google-uid-1");
+            assertThat(payload.email()).isEqualTo("user@example.com");
             assertThat(payload.profileImageUrl()).isEqualTo("https://lh3.googleusercontent.com/photo");
         }
 
         @Test
         void signup_token_with_null_picture_returns_null() {
-            String token = provider.createSignupToken("google", "uid", null);
+            String token = provider.createSignupToken("google", "uid", null, null);
 
             assertThat(provider.parseSignupToken(token).profileImageUrl()).isNull();
+            assertThat(provider.parseSignupToken(token).email()).isNull();
         }
     }
 
@@ -82,7 +84,7 @@ class JwtTokenProviderTest {
 
         @Test
         void parsing_signup_as_access_throws_invalid_token() {
-            String signup = provider.createSignupToken("google", "uid", null);
+            String signup = provider.createSignupToken("google", "uid", null, null);
 
             assertThatThrownBy(() -> provider.parseAccessToken(signup))
                     .isInstanceOf(BusinessException.class)

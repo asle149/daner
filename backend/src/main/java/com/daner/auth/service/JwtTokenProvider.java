@@ -25,6 +25,7 @@ public class JwtTokenProvider {
     private static final String CLAIM_TYPE = "typ";
     private static final String CLAIM_PROVIDER = "provider";
     private static final String CLAIM_OAUTH_ID = "oauth_id";
+    private static final String CLAIM_EMAIL = "email";
     private static final String CLAIM_PROFILE_IMAGE = "picture";
 
     private static final String TYPE_ACCESS = "access";
@@ -53,7 +54,7 @@ public class JwtTokenProvider {
                 Duration.ofDays(properties.refreshTokenValidityDays()));
     }
 
-    public String createSignupToken(String oauthProvider, String oauthId, String profileImageUrl) {
+    public String createSignupToken(String oauthProvider, String oauthId, String email, String profileImageUrl) {
         Instant now = Instant.now();
         Instant expiresAt = now.plus(Duration.ofMinutes(properties.signupTokenValidityMinutes()));
         return Jwts.builder()
@@ -64,6 +65,7 @@ public class JwtTokenProvider {
                         CLAIM_TYPE, TYPE_SIGNUP,
                         CLAIM_PROVIDER, oauthProvider,
                         CLAIM_OAUTH_ID, oauthId,
+                        CLAIM_EMAIL, email == null ? "" : email,
                         CLAIM_PROFILE_IMAGE, profileImageUrl == null ? "" : profileImageUrl
                 ))
                 .signWith(key)
@@ -82,9 +84,11 @@ public class JwtTokenProvider {
         Claims claims = parseClaims(token);
         requireType(claims, TYPE_SIGNUP);
         String picture = claims.get(CLAIM_PROFILE_IMAGE, String.class);
+        String email = claims.get(CLAIM_EMAIL, String.class);
         return new SignupTokenPayload(
                 claims.get(CLAIM_PROVIDER, String.class),
                 claims.get(CLAIM_OAUTH_ID, String.class),
+                email == null || email.isBlank() ? null : email,
                 picture == null || picture.isBlank() ? null : picture
         );
     }

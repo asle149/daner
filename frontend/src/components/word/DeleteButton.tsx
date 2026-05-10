@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteComment } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 type Props = {
   commentId: number;
@@ -12,6 +13,7 @@ type Props = {
 
 export function DeleteButton({ commentId, isMine, word }: Props) {
   const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
 
   const mutation = useMutation({
     mutationFn: () => deleteComment(commentId),
@@ -26,7 +28,9 @@ export function DeleteButton({ commentId, isMine, word }: Props) {
     },
   });
 
-  if (!isMine) return null;
+  // 본인 또는 관리자만 노출. 관리자에겐 "지우기 (관리자)" 라벨로 구분 표기.
+  if (!isMine && !isAdmin) return null;
+  const label = !isMine && isAdmin ? '지우기 (관리자)' : '지우기';
 
   return (
     <button
@@ -34,10 +38,13 @@ export function DeleteButton({ commentId, isMine, word }: Props) {
       className="font-display text-[13px] text-tertiary hover:text-accent"
       disabled={mutation.isPending}
       onClick={() => {
-        if (window.confirm('지울까요?')) mutation.mutate();
+        const msg = !isMine && isAdmin
+          ? '관리자 권한으로 이 글을 지웁니다. 계속할까요?'
+          : '지울까요?';
+        if (window.confirm(msg)) mutation.mutate();
       }}
     >
-      지우기
+      {label}
     </button>
   );
 }

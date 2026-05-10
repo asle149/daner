@@ -56,6 +56,10 @@ public class Word {
         }
     }
 
+    public void resetCommentCount() {
+        this.commentCount = 0;
+    }
+
     public void increaseLikeCount() {
         this.likeCount += 1;
     }

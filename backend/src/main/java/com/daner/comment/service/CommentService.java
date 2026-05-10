@@ -1,5 +1,6 @@
 package com.daner.comment.service;
 
+import com.daner.admin.service.AdminAuditService;
 import com.daner.auth.service.AnonymousLabelService;
 import com.daner.comment.dto.CommentCreateRequest;
 import com.daner.comment.dto.CommentResponse;
@@ -11,6 +12,7 @@ import com.daner.comment.repository.CommentRepository;
 import com.daner.common.exception.BusinessException;
 import com.daner.common.exception.ErrorCode;
 import com.daner.common.ratelimit.RateLimiter;
+import com.daner.common.security.AdminGuard;
 import com.daner.common.util.WordNormalizer;
 import com.daner.like.repository.CommentLikeRepository;
 import com.daner.notification.event.ReplyCreatedEvent;
@@ -49,6 +51,8 @@ public class CommentService {
     private final AnonymousLabelService anonymousLabelService;
     private final ApplicationEventPublisher eventPublisher;
     private final RateLimiter rateLimiter;
+    private final AdminGuard adminGuard;
+    private final AdminAuditService adminAuditService;
 
     @Transactional(readOnly = true)
     public CommentSliceResponse listForWord(String rawWord, String sort, String cursor, Integer limit,
@@ -117,23 +121,52 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
-        boolean canDelete = (comment.getUser() != null && currentUserId != null
+        boolean isAuthor = (comment.getUser() != null && currentUserId != null
                 && comment.getUser().getId().equals(currentUserId))
                 || comment.wasWrittenByAnonymousToken(anonymousToken);
-        if (!canDelete) {
+        Optional<User> adminOpt = isAuthor ? Optional.empty() : adminGuard.findIfAdmin(currentUserId);
+        if (!isAuthor && adminOpt.isEmpty()) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
+        // 관리자 강제 삭제는 답글까지 같이 정리 (일반 사용자는 기존대로 답글 있으면 차단)
         if (!comment.isReply()) {
             long replyCount = commentRepository.countRepliesByParentIds(Set.of(comment.getId())).stream()
                     .mapToLong(CommentRepository.ParentReplyCount::getCnt).sum();
-            if (replyCount > 0) {
+            if (replyCount > 0 && adminOpt.isEmpty()) {
                 throw new BusinessException(ErrorCode.COMMENT_HAS_REPLIES);
             }
         }
         Word word = comment.getWord();
+        long beforeCount = commentRepository.countByWordId(word.getId());
         commentRepository.delete(comment);
-        word.decreaseCommentCount();
+        commentRepository.flush();
+        long afterCount = commentRepository.countByWordId(word.getId());
+        long removed = beforeCount - afterCount;
+        for (long i = 0; i < removed; i++) {
+            word.decreaseCommentCount();
+        }
+
+        if (adminOpt.isPresent()) {
+            adminAuditService.log(adminOpt.get().getId(), "DELETE_COMMENT", "comment",
+                    String.valueOf(comment.getId()),
+                    "word=" + word.getWord() + " removed=" + removed);
+        }
+    }
+
+    /** 단어 방 비우기 — 관리자 전용. 그 단어의 댓글/답글 전부 삭제. */
+    @Transactional
+    public int wipeWordRoom(String rawWord, Long currentUserId) {
+        User admin = adminGuard.requireAdmin(currentUserId);
+        String normalized = WordNormalizer.normalize(rawWord);
+        Word word = wordRepository.findByWord(normalized)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        int removed = commentRepository.deleteAllByWordId(word.getId());
+        word.resetCommentCount();
+        adminAuditService.log(admin.getId(), "WIPE_WORD", "word",
+                String.valueOf(word.getId()),
+                "word=" + word.getWord() + " removed=" + removed);
+        return removed;
     }
 
     private Author resolveAuthor(Word word, Long currentUserId, UUID anonymousToken, boolean wantsAnonymous) {

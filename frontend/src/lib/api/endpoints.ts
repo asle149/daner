@@ -89,6 +89,13 @@ export const createReply = (
 export const deleteComment = (commentId: number) =>
   apiFetch<void>(`/comments/${commentId}`, { method: 'DELETE' });
 
+// ----- Admin -----
+
+export type WordWipeResponse = { word: string; removed: number };
+
+export const wipeWordRoom = (word: string) =>
+  apiFetch<WordWipeResponse>(`/words/${encodeURIComponent(word)}/comments`, { method: 'DELETE' });
+
 // ----- Like -----
 
 export const likeComment = (commentId: number) =>

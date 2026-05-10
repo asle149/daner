@@ -41,6 +41,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String signupToken = jwtTokenProvider.createSignupToken(
                 principal.getOauthProvider(),
                 principal.getOauthId(),
+                principal.getEmail(),
                 principal.getProfileImageUrl());
         return UriComponentsBuilder.fromUriString(frontendUrl)
                 .path("/auth/signup")

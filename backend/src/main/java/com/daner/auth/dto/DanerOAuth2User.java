@@ -11,14 +11,16 @@ public class DanerOAuth2User implements OAuth2User {
     private final OAuth2User delegate;
     private final String oauthProvider;
     private final String oauthId;
+    private final String email;
     private final String profileImageUrl;
     private final Long existingUserId;
 
     public DanerOAuth2User(OAuth2User delegate, String oauthProvider, String oauthId,
-                           String profileImageUrl, Long existingUserId) {
+                           String email, String profileImageUrl, Long existingUserId) {
         this.delegate = delegate;
         this.oauthProvider = oauthProvider;
         this.oauthId = oauthId;
+        this.email = email;
         this.profileImageUrl = profileImageUrl;
         this.existingUserId = existingUserId;
     }
@@ -29,6 +31,10 @@ public class DanerOAuth2User implements OAuth2User {
 
     public String getOauthId() {
         return oauthId;
+    }
+
+    public String getEmail() {
+        return email;
     }
 
     public String getProfileImageUrl() {

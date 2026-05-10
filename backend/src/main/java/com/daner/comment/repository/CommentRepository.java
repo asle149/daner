@@ -27,6 +27,13 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     long countByWordIdAndParentIsNull(Long wordId);
 
+    long countByWordId(Long wordId);
+
+    /** 단어 방의 모든 댓글/답글 일괄 삭제 (관리자 비우기용) */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("DELETE FROM Comment c WHERE c.word.id = :wordId")
+    int deleteAllByWordId(@Param("wordId") Long wordId);
+
     @Query("SELECT c.parent.id AS parentId, COUNT(c) AS cnt FROM Comment c " +
             "WHERE c.parent.id IN :parentIds GROUP BY c.parent.id")
     List<ParentReplyCount> countRepliesByParentIds(@Param("parentIds") Collection<Long> parentIds);

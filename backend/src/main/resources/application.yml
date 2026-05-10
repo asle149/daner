@@ -45,6 +45,9 @@ app:
     member-likes-per-minute: 30
   popular-words:
     cron: "0 0 * * * *"
+  admin:
+    # 콤마로 구분된 관리자 이메일 목록. 부팅 시 일치하는 사용자를 ADMIN 으로 승격.
+    emails: ${ADMIN_EMAILS:}
 
 springdoc:
   api-docs:

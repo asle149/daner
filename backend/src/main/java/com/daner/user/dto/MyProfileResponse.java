@@ -7,10 +7,10 @@ import java.util.List;
 
 public record MyProfileResponse(UserSummary user, List<BookshelfWord> myWords, String nextCursor) {
 
-    public record UserSummary(Long id, String nickname, String profileImageUrl) {
+    public record UserSummary(Long id, String nickname, String profileImageUrl, boolean isAdmin) {
 
         public static UserSummary from(User user) {
-            return new UserSummary(user.getId(), user.getNickname(), user.getProfileImageUrl());
+            return new UserSummary(user.getId(), user.getNickname(), user.getProfileImageUrl(), user.isAdmin());
         }
     }
 

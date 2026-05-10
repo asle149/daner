@@ -46,7 +46,7 @@ class AuthControllerIntegrationTest {
     @Test
     void signup_with_valid_signup_token_creates_user_and_returns_tokens() throws Exception {
         String signupToken = jwtTokenProvider.createSignupToken("google", "uid-1",
-                "https://lh3.googleusercontent.com/p");
+                "test@example.com", "https://lh3.googleusercontent.com/p");
 
         String body = objectMapper.writeValueAsString(Map.of(
                 "signupToken", signupToken,
@@ -68,7 +68,7 @@ class AuthControllerIntegrationTest {
     void signup_with_duplicate_nickname_returns_409() throws Exception {
         userRepository.save(User.builder()
                 .oauthProvider("google").oauthId("existing").nickname("감자전").build());
-        String signupToken = jwtTokenProvider.createSignupToken("google", "new-uid", null);
+        String signupToken = jwtTokenProvider.createSignupToken("google", "new-uid", null, null);
 
         String body = objectMapper.writeValueAsString(Map.of(
                 "signupToken", signupToken,
@@ -94,7 +94,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void signup_with_invalid_nickname_returns_400() throws Exception {
-        String signupToken = jwtTokenProvider.createSignupToken("google", "uid-1", null);
+        String signupToken = jwtTokenProvider.createSignupToken("google", "uid-1", null, null);
 
         String body = objectMapper.writeValueAsString(Map.of(
                 "signupToken", signupToken,

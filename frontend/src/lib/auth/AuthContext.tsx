@@ -10,6 +10,7 @@ type AuthState = {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   refresh: () => Promise<void>;
   setSession: (user: User, accessToken: string, refreshToken: string) => void;
   logout: () => Promise<void>;
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     loading,
     isAuthenticated: user !== null,
+    isAdmin: user?.isAdmin === true,
     refresh,
     setSession,
     logout,

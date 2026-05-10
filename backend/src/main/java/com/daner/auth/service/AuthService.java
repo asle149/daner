@@ -5,6 +5,7 @@ import com.daner.auth.dto.AuthTokensResponse;
 import com.daner.auth.dto.NicknameCheckResponse;
 import com.daner.auth.dto.SignupRequest;
 import com.daner.auth.dto.SignupTokenPayload;
+import com.daner.common.config.AdminProperties;
 import com.daner.common.exception.BusinessException;
 import com.daner.common.exception.ErrorCode;
 import com.daner.user.entity.User;
@@ -26,6 +27,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final AdminProperties adminProperties;
 
     @Transactional
     public AuthTokensResponse signup(SignupRequest request) {
@@ -39,7 +41,12 @@ public class AuthService {
                 .oauthId(payload.oauthId())
                 .nickname(request.nickname())
                 .profileImageUrl(payload.profileImageUrl())
+                .email(payload.email())
                 .build());
+        // 관리자 후보 이메일이면 가입 즉시 ADMIN 으로
+        if (adminProperties.isAdminEmail(payload.email())) {
+            user.promoteToAdmin();
+        }
         return issueTokens(user);
     }
 

@@ -62,6 +62,8 @@ public class SecurityConfig {
                                 "/words/*/comments", "/comments/*/replies"
                         ).permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/comments/*").permitAll()
+                        // 단어 방 일괄 비우기 — 컨트롤러/서비스에서 관리자 권한 검증
+                        .requestMatchers(HttpMethod.DELETE, "/words/*/comments").authenticated()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth
                         .redirectionEndpoint(endpoint -> endpoint.baseUri("/auth/{registrationId}/callback"))

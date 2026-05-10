@@ -134,6 +134,8 @@ GOOGLE_CLIENT_SECRET=...
 GOOGLE_REDIRECT_URI=https://api.daner.kr/v1/auth/google/callback
 CORS_ALLOWED_ORIGINS=https://daner.kr,https://www.daner.kr
 FRONTEND_URL=https://daner.kr
+# 관리자 이메일 (콤마 구분, OAuth 로그인 시 즉시 ADMIN 으로 승격)
+ADMIN_EMAILS=
 ```
 
 ```bash
