@@ -16,21 +16,21 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "다너 (Daner) — 단어로 모이는 작은 커뮤니티",
-    template: "%s · 다너",
+    default: "DANER",
+    template: "%s | DANER",
   },
   description:
     "단어 하나가 하나의 방이 됩니다. 같은 단어를 떠올린 사람들이 한마디씩 남기는 곳.",
   openGraph: {
-    title: "다너 (Daner)",
+    title: "DANER",
     description: "단어로 모이는 작은 커뮤니티",
-    siteName: "다너",
+    siteName: "DANER",
     locale: "ko_KR",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "다너 (Daner)",
+    title: "DANER",
     description: "단어로 모이는 작은 커뮤니티",
   },
 };
