@@ -2,8 +2,8 @@ import { ImageResponse } from 'next/og';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-// Next.js 16 의 동적 OG 이미지 — 카카오/슬랙/디스코드 링크 미리보기에 사용됨.
-// 사이트 본문과 같은 톤 (배경 #fdfcfa, 본문 회색)으로 "오늘의 단어는?" 한 줄.
+// 메인 OG — 사이트의 background.png 살짝 깔고 "오늘의 단어는?" 한 줄.
+// 카카오/슬랙/디스코드 등 링크 미리보기에 사용됨.
 
 export const alt = 'DANER — 단어로 모이는 작은 커뮤니티';
 export const size = { width: 1200, height: 630 };
@@ -11,41 +11,76 @@ export const contentType = 'image/png';
 
 export default async function OgImage() {
   const fontPath = path.join(process.cwd(), 'public/fonts/MemomentKkukkukk.ttf');
-  const fontData = await readFile(fontPath);
+  const bgPath = path.join(process.cwd(), 'public/background.png');
+  const [fontData, bgData] = await Promise.all([readFile(fontPath), readFile(bgPath)]);
+  const bgDataUri = `data:image/png;base64,${bgData.toString('base64')}`;
 
   return new ImageResponse(
     (
       <div
         style={{
+          position: 'relative',
           width: '100%',
           height: '100%',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#fdfcfa',
           fontFamily: 'Memoment',
         }}
       >
+        {/* 배경 PNG — 살짝 흐리게 깔아 본문 톤과 맞춤 */}
+        <img
+          src={bgDataUri}
+          alt=""
+          width={1200}
+          height={630}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: 0.7,
+          }}
+        />
+        {/* 위에 옅은 베이지 톤 오버레이로 글자 가독성 확보 */}
         <div
           style={{
-            fontSize: 92,
-            color: '#5a5a5a',
-            fontWeight: 700,
-            letterSpacing: '-0.01em',
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(253, 252, 250, 0.55)',
           }}
-        >
-          오늘의 단어는?
-        </div>
+        />
+        {/* 본문 */}
         <div
           style={{
-            marginTop: 56,
-            fontSize: 28,
-            color: '#9a9a9a',
-            letterSpacing: '0.4em',
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          DANER
+          <div
+            style={{
+              fontSize: 96,
+              color: '#5a5a5a',
+              fontWeight: 700,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            오늘의 단어는?
+          </div>
+          <div
+            style={{
+              marginTop: 56,
+              fontSize: 28,
+              color: '#9a9a9a',
+              letterSpacing: '0.4em',
+            }}
+          >
+            DANER
+          </div>
         </div>
       </div>
     ),
