@@ -96,6 +96,25 @@ export type WordWipeResponse = { word: string; removed: number };
 export const wipeWordRoom = (word: string) =>
   apiFetch<WordWipeResponse>(`/words/${encodeURIComponent(word)}/comments`, { method: 'DELETE' });
 
+export type AdminStats = {
+  totals: { users: number; words: number; comments: number; anonymousComments: number };
+  today: { newWords: number; newComments: number; newUsers: number };
+  newWordsToday: Array<{ id: number; word: string; commentCount: number; createdAt: string }>;
+  topActiveWordsToday: Array<{ id: number; word: string; commentCount: number }>;
+  recentUsers: Array<{ id: number; nickname: string; createdAt: string; isAdmin: boolean }>;
+  recentAudits: Array<{
+    id: number;
+    adminId: number;
+    action: string;
+    targetType: string | null;
+    targetId: string | null;
+    detail: string | null;
+    createdAt: string;
+  }>;
+};
+
+export const fetchAdminStats = () => apiFetch<AdminStats>('/admin/stats');
+
 // ----- Like -----
 
 export const likeComment = (commentId: number) =>

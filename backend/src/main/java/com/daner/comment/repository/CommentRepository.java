@@ -29,6 +29,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     long countByWordId(Long wordId);
 
+    long countByCreatedAtGreaterThanEqual(java.time.LocalDateTime since);
+
+    long countByUserIsNull();
+
     /** 단어 방의 모든 댓글/답글 일괄 삭제 (관리자 비우기용) */
     @org.springframework.data.jpa.repository.Modifying
     @Query("DELETE FROM Comment c WHERE c.word.id = :wordId")
@@ -42,6 +46,17 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             "WHERE c.createdAt >= :since GROUP BY c.word.id ORDER BY COUNT(c) DESC, c.word.id ASC")
     List<WordCommentCount> findTopWordsByCommentCountSince(@Param("since") java.time.LocalDateTime since,
                                                             org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT w.id AS wordId, w.word AS word, COUNT(c) AS cnt FROM Comment c JOIN c.word w " +
+            "WHERE c.createdAt >= :since GROUP BY w.id, w.word ORDER BY COUNT(c) DESC, w.id ASC")
+    List<TopActiveWord> findTopActiveWordsSince(@Param("since") java.time.LocalDateTime since,
+                                                 org.springframework.data.domain.Pageable pageable);
+
+    interface TopActiveWord {
+        Long getWordId();
+        String getWord();
+        Long getCnt();
+    }
 
     interface ParentReplyCount {
         Long getParentId();
