@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "DANER",
     description: "단어로 모이는 작은 커뮤니티",
   },
